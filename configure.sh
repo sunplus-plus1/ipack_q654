@@ -80,7 +80,5 @@ if [ "$xboot" != "" ];then
 else
 	rm -f bin/xboot.img
 fi
-ls -l bin/bootRom.bin
-ls -l bin/xboot.img
 
 echo ""

@@ -92,7 +92,7 @@ dd if=bin/$BOOTROM     of=bin/$IMG_OUT
 dd if=bin/$XBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=64
 #dd if=bin/$DRAMINIT    of=bin/$IMG_OUT conv=notrunc bs=1k seek=128
 dd if=bin/dtb.img       of=bin/$IMG_OUT conv=notrunc bs=1k seek=128
-#dd if=bin/$UBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
+dd if=bin/$UBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
 #dd if=bin/$ECOS        of=bin/$IMG_OUT conv=notrunc bs=1M seek=1
 dd if=bin/$LINUX       of=bin/$IMG_OUT conv=notrunc bs=1M seek=6
 

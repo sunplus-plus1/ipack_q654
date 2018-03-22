@@ -17,7 +17,7 @@ fi
 # $2: string2 to match
 append_default_str()
 {
-	[ "$1" = "$2" ] && echo -ne "${RED}(default)${NC}"
+	[ "$1" = "$2" ] && echo -ne "${RED} (default)${NC}"
 	echo ""
 }
 
@@ -26,8 +26,8 @@ def_val=$pf_type
 [ "$def_val" = "" ] && def_val=1
 echo "* Select IC Type :"
 echo "--------------------"
-echo -n " [s] Skip - for iboot&xboot dev "  ; append_default_str $def_val s
-echo -n " [x] Skip - for xboot dev "        ; append_default_str $def_val x
+echo -n " [x] Use iBoot(ROM) : for Zebu, for ASIC"  ; append_default_str $def_val x
+echo -n " [s] Use iBoot(NOR) : for EXT_BOOT, for emulation on 8388 ASIC"  ; append_default_str $def_val s
 
 echo -n " -> "
 read pf_type

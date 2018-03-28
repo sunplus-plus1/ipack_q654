@@ -57,7 +57,7 @@ if [ "$pf_type" = "s" ];then
 elif [ "$pf_type" = "x" ];then
 	./update_me.sh ../boot/xboot/bin/$XBOOT   && warn_up_ok $XBOOT
 fi
-#./update_me.sh ../boot/uboot/$UBOOT  && warn_up_ok $UBOOT
+./update_me.sh ../boot/uboot/$UBOOT  && warn_up_ok $UBOOT
 #./update_me.sh ../ecos/bin/$ECOS  && warn_up_ok $ECOS
 
 if [ "$VMLINUX" = "" ];then

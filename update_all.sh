@@ -63,7 +63,7 @@ fi
 if [ "$VMLINUX" = "" ];then
 	./update_me.sh ../linux/kernel/arch/arm/boot/$LINUX  || warn_no_up $LINUX
 else
-	./update_me.sh ../linux/k4/$VMLINUX && warn_up_ok $VMLINUX
+	./update_me.sh ../linux/kernel/$VMLINUX && warn_up_ok $VMLINUX
 	echo "*******************************"
 	echo "* Create $LINUX from $VMLINUX"
 	echo "*******************************"
@@ -75,7 +75,7 @@ if [ "$DTB" != "" ];then
 	echo "*******************************"
 	echo "* Create dtb.img from $DTB"
 	echo "*******************************"
-	./update_me.sh ../linux/k4/$DTB && warn_up_ok $DTB
+	./update_me.sh ../linux/kernel/$DTB && warn_up_ok $DTB
 	./add_uhdr.sh dtb-`date +%Y%m%d-%H%M%S` bin/$DTB bin/dtb.img
 fi
 

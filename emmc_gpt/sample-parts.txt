@@ -1,0 +1,45 @@
+=> setenv partitions "uuid_disk=${uuid_gpt_disk};name=uboot1,size=1MiB,uuid=${uuid_gpt_uboot1};name=uboot2,size=1MiB,uuid=${uuid_gpt_uboot2};name=env,size=512KiB,uuid=${uuid_gpt_env};name=dtb,size=512KiB,uuid=${uuid_gpt_dtb};name=linux,size=8MiB,uuid=${uuid_gpt_linux};name=ecos,size=4MiB,uuid=${uuid_gpt_ecos};name=userdata,size=4MiB,uuid=${uuid_gpt_userdata};"
+=>
+=> gpt write mmc 0 $partitions
+Writing GPT: success!
+=>
+Writing GPT: success!
+=> mmc dev 0 && mmc rescan && mmc part
+mmc0(part 0) is current device
+
+Partition Map for MMC device 0  --   Partition Type: EFI
+
+Part    Start LBA       End LBA         Name
+        Attributes
+        Type GUID
+        Partition GUID
+  1     0x00000022      0x00000821      "uboot1"
+        attrs:  0x0000000000000000
+        type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
+        guid:   12262d0a-0973-c54d-8683-263d6ad674ff
+  2     0x00000822      0x00001021      "uboot2"
+        attrs:  0x0000000000000000
+        type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
+        guid:   bb1d712d-09d6-d841-b479-40e110c0f4b3
+  3     0x00001022      0x00001421      "env"
+        attrs:  0x0000000000000000
+        type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
+        guid:   98e084c4-6e4a-b346-97b6-ab0f183a26e4
+  4     0x00001422      0x00001821      "dtb"
+        attrs:  0x0000000000000000
+        type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
+        guid:   779a37c0-555c-ab4a-9f00-a04b6a317c2f
+  5     0x00001822      0x00005821      "linux"
+        attrs:  0x0000000000000000
+        type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
+        guid:   556023f3-187a-e147-a869-dff3a16d1138
+  6     0x00005822      0x00007821      "ecos"
+        attrs:  0x0000000000000000
+        type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
+        guid:   3d03086a-9d27-4a47-a3fe-6ff02e0306f0
+  7     0x00007822      0x00009821      "userdata"
+        attrs:  0x0000000000000000
+        type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
+        guid:   9525e51a-ac74-7e4d-8564-c01f718e9b2c
+=>
+

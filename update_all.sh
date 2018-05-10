@@ -91,9 +91,6 @@ echo "* Check image..."
 #exit_no_file bin/$BOOTROM
 exit_no_file bin/$XBOOT
 
-# NOTICE: If you want to change offset of kernel, u-boot_script
-#         and dtb, those are loaded by u-boot. Please also modify
-#         u-boot's scripts/create_bootscript.sh
 echo ""
 echo "* Gen NOR image: $IMG_OUT ..."
 dd if=bin/$BOOTROM     of=bin/$IMG_OUT
@@ -109,9 +106,6 @@ ls -lh bin/$IMG_OUT
 B2ZMEM=./tools/bin2zmem/bin2zmem
 ZMEM_HEX=./bin/zmem.hex
 
-# NOTICE: If you want to change offset of kernel, u-boot_script
-#         and dtb, those are loaded by u-boot. Please also modify
-#         u-boot's scripts/create_bootscript.sh
 echo ""
 echo "* Gen ZMEM : $ZMEM_HEX ..."
 rm -f $ZMEM_HEX
@@ -120,7 +114,7 @@ $B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             # 4KB
 #$B2ZMEM  bin/$ECOS        $ZMEM_HEX     0x0       0x0010000             # 64KB
 $B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x0200000             # 2MB  (uboot before relocation)
 $B2ZMEM  bin/$UBOOT_SCR   $ZMEM_HEX     0x0       0x02C0000             # 2MB + 768KB
-$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       0x0300000             # 3MB
+$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) # 3MB - 64
 $B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0308000 - 0x40)) # 3MB + 32KB - 64
 $B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x1F00000             # 31MB (uboot after relocation)
 ls -lh $ZMEM_HEX

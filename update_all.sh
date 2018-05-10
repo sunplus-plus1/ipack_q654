@@ -78,7 +78,12 @@ if [ "$DTB" != "" ];then
 	echo "* Create dtb.img from $DTB"
 	echo "*******************************"
 	./update_me.sh ../linux/kernel/$DTB && warn_up_ok $DTB
-	./add_uhdr.sh dtb-`date +%Y%m%d-%H%M%S` bin/$DTB bin/dtb.img
+	if [ "$VMLINUX" = "" ];then
+		# If we use uImage, not needed to add sp header.
+		cp bin/$DTB bin/dtb.img
+	else
+		./add_uhdr.sh dtb-`date +%Y%m%d-%H%M%S` bin/$DTB bin/dtb.img
+	fi
 fi
 
 echo "* Check image..."

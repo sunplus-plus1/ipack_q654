@@ -1,0 +1,17 @@
+
+Our ISP disk (usb/sdcard) is a MBR/FAT32 partition with a file ispbooot.BIN inside.
+
+To test on zebu, we dump the physical disk to bin, then convert it to hex.
+
+1. BootICE: fill secotor #0~131072 to zero in usb disk or sdcard
+2. BootICE: create mbr/part1=64M FAT32 (WARINGING: don't use FAT16. iboot only recognize FAT32)
+3. Copy ispbooot.BIN into the FAT32 drive
+4. BootICE: dump disk sectors=#0~131072 (64MB) to sd64m.bin.raw
+5. Find out how many <USED_MB> are used : hexdump -C sd64m.bin.raw
+6. dd if=sd64m.bin.raw of=sd64m.bin bs=1M count=<USED_MB>
+7. make sd_hex
+
+For this build :
+> dd if=disk/sd64m.bin.raw of=disk/sd64m.bin bs=1M count=3
+> make sd_hex
+--> disk/sd_image.hex

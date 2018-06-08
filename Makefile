@@ -28,6 +28,17 @@ isp: all
 	@dd if=bin/u-boot.img   of=$(BIN)/$(ISP_IMG) conv=notrunc bs=1k seek=64
 ###############################
 
+# To create isp disk hex for zebu
+# 1. make isp --> gen ispbooot.BIN
+# 2. Read disk/sample_note.txt to learn how to create disk/sd64m.bin
+# 4. make disk_hex --> gen disk/sd_image.hex from disk/sd64m.bin
+# 5. upload the hex to zebu : hex_files/MMC/sd_image.hex
+DISK_IN=disk/sd64m.bin
+DISK_OUT=disk/sd_image.hex
+sd_hex:
+	@hexdump -v -e '1/1 "%02x\n"' $(DISK_IN) > $(DISK_OUT)
+	@ls -l $(DISK_OUT)
+
 ###############################
 # Pack for emmc boot testing
 emmc_hex: all
@@ -56,6 +67,7 @@ TO_RM   := $(SPI_ALL) $(SPI_HEX) $(ISP_IMG) zmem.hex \
 clean:
 	rm -f $(CFG)
 	cd $(BIN) && rm -f $(TO_RM) $(ISP_IMG) $(SPI_HEX) zmem.hex
+	-rm -f disk/sd_image.hex
 
 distclean:
 	cd $(BIN) && rm -f *.img *.bin

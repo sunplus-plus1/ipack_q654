@@ -1,0 +1,54 @@
+http://wiki2.sunplus.com/dvdsa/index.php/Q628/Q628_iBoot_Emulation_Run#Update_Zebu_SPI_NAND_hex
+
+Replace 8388 mtd xboot1, uboot2 (optional uboot1) with q628's.
+
+8388 mtd:
+
+=> mtdparts
+
+device nand0 <sp_spinand.0>, # parts = 25
+ #: name                size            offset          mask_flags
+ 0: nand_header         0x00020000      0x00000000      0
+ 1: xboot1              0x00020000      0x00020000      0
+ 2: uboot1              0x00120000      0x00040000      0
+ 3: uboot2              0x00220000      0x00160000      0
+ 4: env                 0x00200000      0x00380000      0
+ 5: env_redund          0x00200000      0x00580000      0
+ 6: ecos                0x00260000      0x00780000      0
+ 7: kernel              0x00260000      0x009e0000      0
+ 8: rootfs              0x00460000      0x00c40000      0
+ 9: spsdk               0x03600000      0x010a0000      0
+10: spapp               0x00a40000      0x046a0000      0
+11: nvm                 0x00200000      0x050e0000      0
+12: pq                  0x00200000      0x052e0000      0
+13: logo                0x00200000      0x054e0000      0
+14: tcon                0x00200000      0x056e0000      0
+15: iop_car             0x00200000      0x058e0000      0
+16: runtime_cfg         0x00080000      0x05ae0000      0
+17: vi                  0x00100000      0x05b60000      0
+18: isp_logo            0x00500000      0x05c60000      0
+19: vendordata          0x00200000      0x06160000      0
+20: pat_logo            0x00c00000      0x06360000      0
+21: version_info        0x00200000      0x06f60000      0
+22: vd_restore          0x00200000      0x07160000      0
+23: anm_logo            0x00200000      0x07360000      0
+24: userdata            0x08aa0000      0x07560000      0
+
+active partition: nand0,0 - (nand_header) 0x00020000 @ 0x00000000
+
+defaults:
+mtdids  : nand0=sp_spinand.0
+mtdparts: mtdparts=sp_spinand.0:-(whole_nand)
+=>
+
+
+=> nand info
+
+Device 0: nand0, sector size 128 KiB
+  Page size      2048 b
+  OOB size         64 b
+  Erase size   131072 b
+  bblk sect size 1024 b
+  cycle cac=2 rac=3
+=>
+

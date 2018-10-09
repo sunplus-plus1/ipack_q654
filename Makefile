@@ -15,11 +15,12 @@ config:
 
 $(SPI_ALL):
 	make config
-	bash ./update_all.sh $(SPI_ALL)
-	@echo ""
-	@echo "* Gen NOR Hex : $(SPI_HEX)"
-	@./tools/gen_hex.sh $(BIN)/$(SPI_ALL) $(BIN)/$(SPI_HEX)
-
+	bash ./update_all.sh $(SPI_ALL) $(ZEBU_RUN)
+	@if [ "$(ZEBU_RUN)" = '1' ]; then  \
+		echo ""; \
+		echo "* Gen NOR Hex : $(SPI_HEX)"; \
+		./tools/gen_hex.sh $(BIN)/$(SPI_ALL) $(BIN)/$(SPI_HEX); \
+	fi
 ###############################
 # Pack for isp boot testing
 isp: all

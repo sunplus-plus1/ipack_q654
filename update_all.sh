@@ -4,7 +4,7 @@ export PATH="../build/tools/armv5-eabi--glibc--stable/bin/:$PATH"
 
 
 IMG_OUT=$1
-
+ZEBU_RUN=$2
 if [ "IMG_OUT" = "" ];then
 	echo "Error: no output file name"
 	exit 1
@@ -100,17 +100,19 @@ dd if=bin/$LINUX       of=bin/$IMG_OUT conv=notrunc bs=1M seek=6
 
 ls -lh bin/$IMG_OUT
 
-B2ZMEM=./tools/bin2zmem/bin2zmem
-ZMEM_HEX=./bin/zmem.hex
+if [ "$ZEBU_RUN" = "1" ];then 
+	B2ZMEM=./tools/bin2zmem/bin2zmem
+	ZMEM_HEX=./bin/zmem.hex
 
-echo ""
-echo "* Gen ZMEM : $ZMEM_HEX ..."
-rm -f $ZMEM_HEX
-#        in               out           in_skip     DRAM_off
-$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             # 4KB
-#$B2ZMEM  bin/$ECOS        $ZMEM_HEX     0x0       0x0010000             # 64KB
-$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x0200000             # 2MB  (uboot before relocation)
-$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) # 3MB - 64
-$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0308000 - 0x40)) # 3MB + 32KB - 64
-$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x1F00000             # 31MB (uboot after relocation)
-ls -lh $ZMEM_HEX
+	echo ""
+	echo "* Gen ZMEM : $ZMEM_HEX ..."
+	rm -f $ZMEM_HEX
+	#        in               out           in_skip     DRAM_off
+	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             # 4KB
+	#$B2ZMEM  bin/$ECOS        $ZMEM_HEX     0x0       0x0010000             # 64KB
+	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x0200000             # 2MB  (uboot before relocation)
+	$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) # 3MB - 64
+	$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0308000 - 0x40)) # 3MB + 32KB - 64
+	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x1F00000             # 31MB (uboot after relocation)
+	ls -lh $ZMEM_HEX
+fi

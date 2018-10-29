@@ -41,9 +41,11 @@ XBOOT=xboot.img
 UBOOT=u-boot.img
 ECOS=ecos.img
 LINUX=uImage
-#VMLINUX=          # mark to use uImage
-VMLINUX=vmlinux    # create customized uImage from vmlinux
+VMLINUX=          # mark to use uImage
+#VMLINUX=vmlinux    # create customized uImage from vmlinux
 DTB=dtb
+
+KPATH=linux/kernel/
 
 # Use uncompressed version first
 if [ -f ../ecos/bin/$ECOS.orig ];then
@@ -61,9 +63,9 @@ fi
 #./update_me.sh ../ecos/bin/$ECOS  && warn_up_ok $ECOS
 
 if [ "$VMLINUX" = "" ];then
-	./update_me.sh ../linux/kernel/arch/arm/boot/$LINUX  || warn_no_up $LINUX
+	./update_me.sh ../$KPATH/arch/arm/boot/$LINUX  || warn_no_up $LINUX
 else
-	./update_me.sh ../linux/kernel/$VMLINUX && warn_up_ok $VMLINUX
+	./update_me.sh ../$KPATH/$VMLINUX && warn_up_ok $VMLINUX
 	echo "*******************************"
 	echo "* Create $LINUX from $VMLINUX"
 	echo "*******************************"
@@ -75,7 +77,7 @@ if [ "$DTB" != "" ];then
 	echo "*******************************"
 	echo "* Create dtb.img from $DTB"
 	echo "*******************************"
-	./update_me.sh ../linux/kernel/$DTB && warn_up_ok $DTB
+	./update_me.sh ../$KPATH/$DTB && warn_up_ok $DTB
 	if [ "$VMLINUX" = "" ];then
 		# If we use uImage, not needed to add sp header.
 		cp bin/$DTB bin/dtb.img

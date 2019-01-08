@@ -74,10 +74,21 @@ emmc_hex: all
 	@dd if=$(BIN)/uImage of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x1822) >/dev/null 2>&1
 	@hexdump -v -e '1/1 "%02x\n"' $(BIN)/emmc_user0.bin > $(BIN)/$(EMMC_USER)
 	@ls -l $(BIN)/$(EMMC_USER)
-###############################
 
+zebu_hex_dxtor:
+	@./configure.sh x # x for zebu
+	DXTOR=1 bash ./update_all.sh $(SPI_ALL) 1
+	@echo ""
+
+zebu_hex_fakedram:
+	@./configure.sh x # x for zebu
+	DXTOR=0 bash ./update_all.sh $(SPI_ALL) 1
+	@echo ""
+
+dxtor:
+	@make DXTOR=1
 TO_RM   := $(SPI_ALL) $(SPI_HEX) $(ISP_IMG) zmem.hex \
-	   bootRom.bin xboot.img u-boot.img ecos.img uImage vmlinux vmlinux.bin \
+	   bootRom.bin xboot.img u-boot.img ecos.img ecos.img.orig uImage vmlinux vmlinux.bin \
 	   dtb dtb.img \
 	   emmc_user0.bin $(EMMC_BOOT1) $(EMMC_USER)
 clean:

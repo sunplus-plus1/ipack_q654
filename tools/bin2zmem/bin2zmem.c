@@ -3,31 +3,67 @@
 #include <string.h>
 #include <sys/stat.h>
 
-//static int g_debug = 0;
+#if 0
 static int g_debug = 1;
-
-//#define dbg(args...) do { if (g_debug) fprintf(stderr, ##args); } while (0)
+#define dbg(args...) do { if (g_debug) fprintf(stderr, ##args); } while (0)
+#else
+static int g_debug = 0;
 #define dbg(args...)
+#endif
 
 static void usage(void)
 {
 	fprintf(stderr, "bin2zmem (build: %s %s)\n", __DATE__, __TIME__);
 	fprintf(stderr, "usage:\n"
-			"bin2zmem <input> <output> <input_sz> <zmem_off>\n"
+			"bin2zmem <input> <output> <input_off> <zmem_off> <1=dram_xtor>\n"
 	       );
 }
 
-//#define ZMEM_IDX_STEP  8   // old zebu (137) : each @ has 8 bytes, little-endian (L: byte 0)
-#define ZMEM_IDX_STEP  16  // new zebu (q628) : each @ has 16 bytes, big-endian (R: byte 0)
+// If using DRAM XTOR :
+// 1. cpu view != dram view.
+// 2. hex format is 2 bytes
+
+#define ZMEM_FAKE_DRAM_ZW_LEN   16 // zebu + fake dram (q628) : each @ has 16 bytes, big-endian (R: byte 0)
+#define ZMEM_DRAM_XTOR_ZW_LEN    2 // zebu + dram xtor (q628) : each @ has 2 bytes, big-endian (R: byte 0)
 
 //#define ZENDIAN       htonl
 #define ZENDIAN       /* x86 is little endian */
+
+/*
+ * @cpu_view : cpu view address in byte
+ *
+ * Return dram xtor view in zword (ZMEM_DRAM_XTOR_ZW_LEN)
+ */
+static unsigned int cpu2dxtor_view(unsigned int cpu_view)
+{
+	unsigned int dram_view, tmp;
+
+	/* dram view   = (      BA,       ROW,   COL)
+	 * Offset      @       25         10       0
+	 * = address_cpu ( [13:11],   [28:14], [10:1]) 	// Q628 is 4Gb
+	 */
+	dram_view =
+		(((cpu_view >> 11) & 0x7) << 25)    | /* cpu[13:11]   */
+		(((cpu_view >> 14) & 0x7fff) << 10) | /* cpu[28:14] */
+		((cpu_view  >>  1) & 0x3ff);          /* cpu[10:1]  */
+
+	if (g_debug) {
+		static int init = 0;
+		if (init++ < 50) {
+			dbg("cpu view=0x%08x\n", cpu_view);
+			dbg("zw_off  =0x%08x\n", dram_view);
+		}
+	}
+
+	return dram_view;
+}
 
 // argv
 // [1]   = input bin filename       (read only)
 // [2]   = output zmem hex filename (append)
 // [3]   = input offset
 // [4]   = zmem offset
+// [5]   = dram view: 0=fake_dram, 1=DRAM_XTOR
 int main(int argc, char **argv)
 {
 	char *input, *output;
@@ -38,10 +74,12 @@ int main(int argc, char **argv)
 	unsigned int bufsz = sizeof(buf);;
 	int in_skip;
 	unsigned int zmem_off;
-	unsigned int zmem_off_zw; // offset in zword (size = ZMEM_IDX_STEP)
+	unsigned int zmem_off_zw, zw_off; // offset in zword (size = zw_size)
 	int res;
 	int i;
 	unsigned int val, val2, val3, val4;
+	int dxtor = 0;
+	int zw_step = ZMEM_FAKE_DRAM_ZW_LEN;
 
 	if (argc < 5) {
 		usage();
@@ -53,12 +91,20 @@ int main(int argc, char **argv)
 	in_skip = strtol(argv[3], NULL, 0);
 	zmem_off = strtol(argv[4], NULL, 0);
 
-	if (zmem_off % ZMEM_IDX_STEP) {
-		fprintf(stderr, "Error: arg zmem_off is not ZMEM_IDX_STEP-byte aligned!\n");
+	if (argc >= 6 && strtol(argv[5], NULL, 0) == 1) {
+		dbg("Gen for dram xtor\n");
+		dxtor = 1;
+		zw_step = ZMEM_DRAM_XTOR_ZW_LEN;
+	}
+
+	dbg("zw_step=%d bytes\n", zw_step);
+
+	if (zmem_off % zw_step) {
+		fprintf(stderr, "Error: arg zmem_off is not zw_step-byte aligned!\n");
 		return -1;
 	}
 
-	zmem_off_zw = zmem_off / ZMEM_IDX_STEP;
+	zmem_off_zw = zmem_off / zw_step;
 
 	fprintf(stderr, "input=%s output=%s in_skip=0x%x zmem_off=0x%x (qw=0x%x)\n",
 		input, output, in_skip, zmem_off, zmem_off_zw);
@@ -105,24 +151,30 @@ int main(int argc, char **argv)
 			dbg("Input EOF (got=%d)\n", got);
 			break;
 		} else if (got < bufsz) {
-			int pad = ZMEM_IDX_STEP - (got % ZMEM_IDX_STEP);
-			if (pad != ZMEM_IDX_STEP) {
+			int pad = zw_step - (got % zw_step);
+			if (pad != zw_step) {
 				dbg("pad %d\n", pad);
-				// pad with 0 until next ZMEM_IDX_STEP-byte aligned address
+				// pad with 0 until next zw_step-byte aligned address
 				memset(&buf[got], 0, pad);
 				got += pad;
 			}
 		}
 
-		for (i = 0; got > 0; i++, got -= ZMEM_IDX_STEP, zmem_off_zw++) {
+		for (i = 0; got > 0; i++, got -= zw_step, zmem_off_zw++) {
 			// Output format:
 			//   @<zword off>	<zword value>
 
-			val  = ZENDIAN(*(int *)&buf[i * ZMEM_IDX_STEP]);
-			val2 = ZENDIAN(*(int *)&buf[(i * ZMEM_IDX_STEP) + 0x4]);
-			val3 = ZENDIAN(*(int *)&buf[(i * ZMEM_IDX_STEP) + 0x8]);
-			val4 = ZENDIAN(*(int *)&buf[(i * ZMEM_IDX_STEP) + 0xc]);
-			fprintf(fp_out, "@%x %08x%08x%08x%08x\n", (int)zmem_off_zw, val4, val3, val2, val);
+			zw_off = dxtor ? cpu2dxtor_view(zmem_off_zw * zw_step) : zmem_off_zw;
+			if (zw_step == 16) {
+				val  = ZENDIAN(*(int *)&buf[i * zw_step]);
+				val2 = ZENDIAN(*(int *)&buf[(i * zw_step) + 0x4]);
+				val3 = ZENDIAN(*(int *)&buf[(i * zw_step) + 0x8]);
+				val4 = ZENDIAN(*(int *)&buf[(i * zw_step) + 0xc]);
+				fprintf(fp_out, "@%x %08x%08x%08x%08x\n", (int)zw_off, val4, val3, val2, val);
+			} else if (zw_step == 2) {
+				val  = ZENDIAN(*(unsigned short *)&buf[i * zw_step]);
+				fprintf(fp_out, "@%x %04x\n", (int)zw_off, val);
+			}
 		}
 	} while (1);
 

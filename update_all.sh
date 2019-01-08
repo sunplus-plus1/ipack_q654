@@ -41,8 +41,8 @@ XBOOT=xboot.img
 UBOOT=u-boot.img
 ECOS=ecos.img
 LINUX=uImage
-VMLINUX=          # mark to use uImage
-#VMLINUX=vmlinux    # create customized uImage from vmlinux
+VMLINUX=            # Use compressed uImage
+#VMLINUX=vmlinux    # Use uncompressed uImage (qkboot + uncompressed vmlinux)
 DTB=dtb
 
 KPATH=linux/kernel/
@@ -106,15 +106,28 @@ if [ "$ZEBU_RUN" = "1" ];then
 	B2ZMEM=./tools/bin2zmem/bin2zmem
 	ZMEM_HEX=./bin/zmem.hex
 
+	# Set DXTOR=1 to gen DRAM XTOR hex. Otherwise, gen for fake dram hex.
+	#DXTOR=1
 	echo ""
-	echo "* Gen ZMEM : $ZMEM_HEX ..."
+	if [ "$DXTOR" = "1" ];then
+		echo -e "* Gen ZMEM : $ZMEM_HEX ... (${YELLOW}DRAM XTOR${NC})"
+	else
+		echo -e "* Gen ZMEM : $ZMEM_HEX ... (${CYAN}FAKE DRAM${NC})"
+	fi
 	rm -f $ZMEM_HEX
 	#        in               out           in_skip     DRAM_off
-	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             # 4KB
-	#$B2ZMEM  bin/$ECOS        $ZMEM_HEX     0x0       0x0010000             # 64KB
-	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x0200000             # 2MB  (uboot before relocation)
-	$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) # 3MB - 64
-	$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0308000 - 0x40)) # 3MB + 32KB - 64
-	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x1F00000             # 31MB (uboot after relocation)
+	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
+	#$B2ZMEM  bin/$ECOS        $ZMEM_HEX     0x0       0x0010000             $DXTOR # 64KB
+	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x0200000             $DXTOR # 2MB  (uboot before relocation)
+	$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) $DXTOR # 3MB - 64
+	$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0308000 - 0x40)) $DXTOR # 3MB + 32KB - 64
+	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x1F00000             $DXTOR # 31MB (uboot after relocation)
 	ls -lh $ZMEM_HEX
+
+	# check linux image size
+	file_sz=`du -sb bin/$LINUX |cut -f1`
+	if [ $file_sz -gt $((0x1F00000 - 0x0308000)) ];then
+		echo "Error: $LINUX size ($file_sz) is too big in ZMEM arrangement!"
+		exit 1
+	fi
 fi

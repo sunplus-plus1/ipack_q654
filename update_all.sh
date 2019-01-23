@@ -102,6 +102,12 @@ dd if=bin/$LINUX       of=bin/$IMG_OUT conv=notrunc bs=1M seek=6
 
 ls -lh bin/$IMG_OUT
 
+# check linux image size
+kernel_sz=`du -sb bin/$LINUX |cut -f1`
+if [ $kernel_sz -gt $((0xA00000)) ];then
+	echo -e "${YELLOW}Warning: $LINUX size ($kernel_sz) is big. Need bigger SPI_NOR flash (>16MB)!${NC}"
+fi
+
 if [ "$ZEBU_RUN" = "1" ];then 
 	B2ZMEM=./tools/bin2zmem/bin2zmem
 	ZMEM_HEX=./bin/zmem.hex
@@ -125,9 +131,8 @@ if [ "$ZEBU_RUN" = "1" ];then
 	ls -lh $ZMEM_HEX
 
 	# check linux image size
-	file_sz=`du -sb bin/$LINUX |cut -f1`
-	if [ $file_sz -gt $((0x1F00000 - 0x0308000)) ];then
-		echo "Error: $LINUX size ($file_sz) is too big in ZMEM arrangement!"
+	if [ $kernel_sz -gt $((0x1F00000 - 0x0308000)) ];then
+		echo -e "${YELLOW}Error: $LINUX size ($kernel_sz) is too big in ZMEM arrangement!${NC}"
 		exit 1
 	fi
 fi

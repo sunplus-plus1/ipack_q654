@@ -1,3 +1,9 @@
 *~
 *.bak
 *.o
+*.bin
+*.img
+
+pack.conf
+bin/dtb
+bin/uImage

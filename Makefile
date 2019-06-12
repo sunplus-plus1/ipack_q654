@@ -7,7 +7,8 @@ CFG        := pack.conf
 ISP_IMG    := ispbooot.BIN
 EMMC_BOOT1 := emmc_boot1.hex
 EMMC_USER  := emmc_user0.hex
-USE_TFTP   := 0
+
+BOOT_KERNEL_FROM_TFTP ?=
 
 all: $(SPI_ALL)
 
@@ -22,7 +23,7 @@ $(SPI_ALL):
 		echo "* Gen NOR Hex : $(SPI_HEX)"; \
 		./tools/gen_hex.sh $(BIN)/$(SPI_ALL) $(BIN)/$(SPI_HEX); \
 	fi
-	@if [ "$(USE_TFTP)" = '1' ]; then \
+	@if [ "$(BOOT_KERNEL_FROM_TFTP)" = '1' ]; then \
 		./copy2tftp.sh; \
 	fi
 ###############################

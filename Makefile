@@ -9,6 +9,7 @@ EMMC_BOOT1 := emmc_boot1.hex
 EMMC_USER  := emmc_user0.hex
 
 BOOT_KERNEL_FROM_TFTP ?=
+TFTP_SERVER_PATH ?=
 
 all: $(SPI_ALL)
 
@@ -24,7 +25,7 @@ $(SPI_ALL):
 		./tools/gen_hex.sh $(BIN)/$(SPI_ALL) $(BIN)/$(SPI_HEX); \
 	fi
 	@if [ "$(BOOT_KERNEL_FROM_TFTP)" = '1' ]; then \
-		./copy2tftp.sh; \
+		./copy2tftp.sh $(TFTP_SERVER_PATH); \
 	fi
 ###############################
 # Pack for isp boot testing

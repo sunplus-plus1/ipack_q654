@@ -1,5 +1,5 @@
 # Copy dtb and uImage to another with user name
-TFTP_PATH=/home/scftp
+TFTP_PATH=$1
 
 cd bin
 pwd

@@ -114,7 +114,7 @@ if [ "$ZEBU_RUN" = "1" ];then
 	make -C ./tools/bin2zmem
 
 	# Set DXTOR=1 to gen DRAM XTOR hex. Otherwise, gen for fake dram hex.
-	#DXTOR=1
+	DXTOR=${DXTOR-1}
 	echo ""
 	if [ "$DXTOR" = "1" ];then
 		echo -e "* Gen ZMEM : $ZMEM_HEX ... (${YELLOW}DRAM XTOR${NC})"

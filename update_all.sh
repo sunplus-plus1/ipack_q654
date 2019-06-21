@@ -1,6 +1,6 @@
 #./update_me.sh <source_img>
 
-export PATH="../build/tools/armv5-eabi--glibc--stable/bin/:$PATH"
+export PATH="../crossgcc/armv5-eabi--glibc--stable/bin/:$PATH"
 
 
 IMG_OUT=$1

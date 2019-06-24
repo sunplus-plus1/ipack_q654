@@ -5,6 +5,8 @@ export PATH="../crossgcc/armv5-eabi--glibc--stable/bin/:$PATH"
 
 IMG_OUT=$1
 ZEBU_RUN=$2
+BOOT_KERNEL_FROM_TFTP=$3
+
 if [ "IMG_OUT" = "" ];then
 	echo "Error: no output file name"
 	exit 1
@@ -13,6 +15,7 @@ fi
 if [ -f colors.env ];then
 	. colors.env
 fi
+
 if [ -f pack.conf ];then
 	. pack.conf
 fi
@@ -93,19 +96,27 @@ exit_no_file bin/$XBOOT
 
 echo ""
 echo "* Gen NOR image: $IMG_OUT ..."
-dd if=bin/$BOOTROM     of=bin/$IMG_OUT
+if [ -f bin/$BOOTROM ]; then
+	dd if=bin/$BOOTROM     of=bin/$IMG_OUT
+else
+	rm -f bin/$IMG_OUT
+fi
 dd if=bin/$XBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=64
-dd if=bin/dtb.img       of=bin/$IMG_OUT conv=notrunc bs=1k seek=128
+dd if=bin/dtb.img      of=bin/$IMG_OUT conv=notrunc bs=1k seek=128
 dd if=bin/$UBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
-#dd if=bin/$ECOS        of=bin/$IMG_OUT conv=notrunc bs=1M seek=1
-dd if=bin/$LINUX       of=bin/$IMG_OUT conv=notrunc bs=1M seek=6
+if [ "$BOOT_KERNEL_FROM_TFTP" != "1" ]; then
+	#dd if=bin/$ECOS        of=bin/$IMG_OUT conv=notrunc bs=1M seek=1
+	dd if=bin/$LINUX       of=bin/$IMG_OUT conv=notrunc bs=1M seek=6
+fi
 
 ls -lh bin/$IMG_OUT
 
-# check linux image size
-kernel_sz=`du -sb bin/$LINUX |cut -f1`
-if [ $kernel_sz -gt $((0xA00000)) ];then
-	echo -e "${YELLOW}Warning: $LINUX size ($kernel_sz) is big. Need bigger SPI_NOR flash (>16MB)!${NC}"
+if [ "$BOOT_KERNEL_FROM_TFTP" != "1" ]; then
+	# check linux image size
+	kernel_sz=`du -sb bin/$LINUX | cut -f1`
+	if [ $kernel_sz -gt $((0xA00000)) ]; then
+		echo -e "${YELLOW}Warning: $LINUX size ($kernel_sz) is big. Need bigger SPI_NOR flash (>16MB)!${NC}"
+	fi
 fi
 
 if [ "$ZEBU_RUN" = "1" ];then 

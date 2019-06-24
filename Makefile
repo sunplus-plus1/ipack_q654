@@ -18,7 +18,7 @@ config:
 
 $(SPI_ALL):
 	make config
-	bash ./update_all.sh $(SPI_ALL) $(ZEBU_RUN)
+	bash ./update_all.sh $(SPI_ALL) $(ZEBU_RUN) $(BOOT_KERNEL_FROM_TFTP)
 	@if [ "$(ZEBU_RUN)" = '1' ]; then  \
 		echo ""; \
 		echo "* Gen NOR Hex : $(SPI_HEX)"; \
@@ -27,6 +27,7 @@ $(SPI_ALL):
 	@if [ "$(BOOT_KERNEL_FROM_TFTP)" = '1' ]; then \
 		./copy2tftp.sh $(TFTP_SERVER_PATH); \
 	fi
+
 ###############################
 # Pack for isp boot testing
 isp: all
@@ -83,12 +84,12 @@ emmc_hex: all
 
 zebu_hex_dxtor:
 	@./configure.sh x # x for zebu
-	DXTOR=1 bash ./update_all.sh $(SPI_ALL) 1
+	DXTOR=1 bash ./update_all.sh $(SPI_ALL) 1 0
 	@echo ""
 
 zebu_hex_fakedram:
 	@./configure.sh x # x for zebu
-	DXTOR=0 bash ./update_all.sh $(SPI_ALL) 1
+	DXTOR=0 bash ./update_all.sh $(SPI_ALL) 1 0
 	@echo ""
 
 dxtor:

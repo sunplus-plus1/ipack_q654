@@ -47,6 +47,7 @@ NONOS=rom.img
 LINUX=uImage
 VMLINUX=            # Use compressed uImage
 #VMLINUX=vmlinux    # Use uncompressed uImage (qkboot + uncompressed vmlinux)
+DTB=dtb
 
 KPATH=linux/kernel/
 
@@ -80,6 +81,19 @@ else
 	./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX 0x308000 0x308000
 fi
 
+if [ "$DTB" != "" ];then
+	echo "*******************************"
+	echo "* Create dtb.img from $DTB"
+	echo "*******************************"
+	./update_me.sh ../$KPATH/$DTB && warn_up_ok $DTB
+	if [ "$VMLINUX" = "" ];then
+		# If we use uImage, not needed to add sp header.
+		cp bin/$DTB bin/dtb.img
+	else
+		./add_uhdr.sh dtb-`date +%Y%m%d-%H%M%S` bin/$DTB bin/dtb.img
+	fi
+fi
+
 echo "* Check image..."
 # without iboot: use romcode iboot
 #exit_no_file bin/$BOOTROM
@@ -93,6 +107,7 @@ else
 	rm -f bin/$IMG_OUT
 fi
 dd if=bin/$XBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=64
+dd if=bin/dtb.img      of=bin/$IMG_OUT conv=notrunc bs=1k seek=128
 dd if=bin/$UBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
 if [ "$BOOT_KERNEL_FROM_TFTP" != "1" ]; then
 	#dd if=bin/$ECOS        of=bin/$IMG_OUT conv=notrunc bs=1M seek=1
@@ -131,6 +146,7 @@ if [ "$ZEBU_RUN" = "1" ];then
 	#$B2ZMEM  bin/$ECOS        $ZMEM_HEX     0x0       0x0010000             $DXTOR # 64KB
 	$B2ZMEM  bin/$NONOS       $ZMEM_HEX     0x0       0x0010000             $DXTOR # 64KB
 	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x0200000             $DXTOR # 2MB  (uboot before relocation)
+	$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) $DXTOR # 3MB - 64
 	$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0308000 - 0x40)) $DXTOR # 3MB + 32KB - 64
 	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x1F00000             $DXTOR # 31MB (uboot after relocation)
 	ls -lh $ZMEM_HEX

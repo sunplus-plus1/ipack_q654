@@ -26,8 +26,8 @@ def_val=$pf_type
 [ "$def_val" = "" ] && def_val=1
 echo "* Select IC Type :"
 echo "--------------------"
-echo -n " [x] Use iBoot(ROM) : for Zebu, for ASIC"  ; append_default_str $def_val x
-echo -n " [s] Use iBoot(NOR) : for EXT_BOOT, for emulation on 8388 ASIC"  ; append_default_str $def_val s
+echo -n " [x] Use iBoot (internal ROM): for Zebu or ASIC"; append_default_str $def_val x
+echo -n " [s] Use iBoot (external NOR): for EXT_BOOT"; append_default_str $def_val s
 
 echo -n " -> "
 read pf_type

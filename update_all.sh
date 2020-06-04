@@ -1,11 +1,14 @@
 #./update_me.sh <source_img>
 
 export PATH="../crossgcc/armv5-eabi--glibc--stable/bin/:$PATH"
-
+export PATH="../crossgcc/riscv64-sifive-linux-gnu/bin/:$PATH"
+export PATH="../crossgcc/riscv64-unknown-elf/bin/:$PATH"
 
 IMG_OUT=$1
 ZEBU_RUN=$2
 BOOT_KERNEL_FROM_TFTP=$3
+CHIP=$4
+ARCH=$5 
 
 if [ "IMG_OUT" = "" ];then
 	echo "Error: no output file name"
@@ -48,7 +51,8 @@ LINUX=uImage
 VMLINUX=            # Use compressed uImage
 #VMLINUX=vmlinux    # Use uncompressed uImage (qkboot + uncompressed vmlinux)
 DTB=dtb
-
+FREEROTS=freertos
+OPENSBI_KERNEL=OpenSBI_Kernel.img
 KPATH=linux/kernel/
 
 # Use uncompressed version first
@@ -67,7 +71,7 @@ fi
 #./update_me.sh ../ecos/bin/$ECOS  && warn_up_ok $ECOS
 
 if [ -f ../nonos/Bchip-non-os/bin/$NONOS ]; then
-./update_me.sh ../nonos/Bchip-non-os/bin/$NONOS  && warn_up_ok $NONOS
+	./update_me.sh ../nonos/Bchip-non-os/bin/$NONOS  && warn_up_ok $NONOS
 fi
 
 if [ "$VMLINUX" = "" ];then
@@ -77,8 +81,18 @@ else
 	echo "*******************************"
 	echo "* Create $LINUX from $VMLINUX"
 	echo "*******************************"
+	if [ "$CHIP" = "I143" ]; then
+		if [ "$ARCH" = "riscv" ]; then
+			riscv64-sifive-linux-gnu-objcopy -O binary -S ../boot/xboot/bin/xboot bin/$VMLINUX.bin
+			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0xA0200000 0xA0200000 kernel	#for xboot--kernel
+		else
+			armv5-glibc-linux-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
+			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x20208000 0x20208000 kernel	#for xboot--kernel
+		fi
+ 	else
         armv5-glibc-linux-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
-	./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX 0x308000 0x308000
+		./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x308000 0x308000 kernel
+	fi
 fi
 
 if [ "$DTB" != "" ];then
@@ -90,14 +104,34 @@ if [ "$DTB" != "" ];then
 		# If we use uImage, not needed to add sp header.
 		cp bin/$DTB bin/dtb.img
 	else
-		./add_uhdr.sh dtb-`date +%Y%m%d-%H%M%S` bin/$DTB bin/dtb.img
+		./add_uhdr.sh dtb-`date +%Y%m%d-%H%M%S` bin/$DTB bin/dtb.img $ARCH
 	fi
 fi
 
+if [ "$CHIP" = "I143" ]; then
+	./update_me.sh ../freertos/build/FreeRTOS-simple.elf  && warn_up_ok $FREEROTS
+	riscv64-unknown-elf-objcopy -O binary -S ./bin/FreeRTOS-simple.elf bin/$FREEROTS.bin
+	if [ "$ARCH" = "riscv" ]; then
+		./add_uhdr.sh freertos-`date +%Y%m%d-%H%M%S` bin/$FREEROTS.bin bin/$FREEROTS.img $ARCH
+	fi
+fi
 echo "* Check image..."
 # without iboot: use romcode iboot
 #exit_no_file bin/$BOOTROM
 exit_no_file bin/$XBOOT
+if [ "$CHIP" = "I143" ]; then
+	if [ -f ../boot/xboot/bin/$OPENSBI_KERNEL ]; then
+		rm -f bin/$OPENSBI_KERNEL
+		./update_me.sh ../boot/xboot/bin/$OPENSBI_KERNEL && warn_up_ok $OPENSBI_KERNEL 
+		if [ "$ARCH" = "riscv" ]; then
+			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0xA0200000 0xA0200000 	#for xboot--kernel
+		else
+			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x20208000 0x20208000 	#for xboot--kernel
+		fi
+		echo "####use opensbi_kernel file replace uboot"
+		UBOOT=$OPENSBI_KERNEL
+	fi
+fi
 
 echo ""
 echo "* Gen NOR image: $IMG_OUT ..."
@@ -115,6 +149,9 @@ if [ "$BOOT_KERNEL_FROM_TFTP" != "1" ]; then
 		dd if=bin/$NONOS       of=bin/$IMG_OUT conv=notrunc bs=1M seek=1
 	fi
 	dd if=bin/$LINUX       of=bin/$IMG_OUT conv=notrunc bs=1M seek=6
+	if [ "$CHIP" = "I143" ]; then
+		dd if=bin/$FREEROTS.img       of=bin/$IMG_OUT conv=notrunc bs=1k seek=1536   #1.5M
+	fi
 fi
 
 ls -lh bin/$IMG_OUT
@@ -142,6 +179,7 @@ if [ "$ZEBU_RUN" = "1" ];then
 	fi
 	rm -f $ZMEM_HEX
 	#        in               out           in_skip     DRAM_off
+	if [ "$CHIP" != "I143" ]; then
 	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
 	#$B2ZMEM  bin/$ECOS        $ZMEM_HEX     0x0       0x0010000             $DXTOR # 64KB
 	$B2ZMEM  bin/$NONOS       $ZMEM_HEX     0x0       0x0010000             $DXTOR # 64KB
@@ -149,6 +187,19 @@ if [ "$ZEBU_RUN" = "1" ];then
 	$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) $DXTOR # 3MB - 64
 	$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0308000 - 0x40)) $DXTOR # 3MB + 32KB - 64
 	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x1F00000             $DXTOR # 31MB (uboot after relocation)
+	else
+	#RISCV zmem Memory:{freertos|xboot|uboot|opensbi|dtb|kernel}
+	$B2ZMEM  bin/$FREEROTS.img  $ZMEM_HEX     0x0       0x00000000 	       		$DXTOR # 0
+	$B2ZMEM  bin/$XBOOT       	$ZMEM_HEX     0x0       0x000F0000            	$DXTOR # 4KB
+	$B2ZMEM  bin/$UBOOT       	$ZMEM_HEX     0x0       $((0x0100000 - 0x40)) 	$DXTOR # 1MB - 64 (OpenSBI start 0x1D0000)
+#	$B2ZMEM  bin/dtb.img     	$ZMEM_HEX     0x0       $((0x01F0000 - 0x40)) 			$DXTOR # 1M + 960KB
+	if [ "$ARCH" = "riscv" ]; then
+		$B2ZMEM  bin/$LINUX      	$ZMEM_HEX     0x0       $((0x0200000 - 0x40)) 	$DXTOR # 2MB - 64
+	else
+		$B2ZMEM  bin/$LINUX      	$ZMEM_HEX     0x0       $((0x0208000 - 0x40)) 	$DXTOR # 2MB - 64
+	fi
+	#$B2ZMEM  bin/initramfs.img	$ZMEM_HEX     0x0		$((0x02000000 - 0x40))	$DXTOR
+	fi
 	ls -lh $ZMEM_HEX
 
 	# check linux image size

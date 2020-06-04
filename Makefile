@@ -2,15 +2,17 @@
 
 BIN        := bin
 SPI_ALL    := spi_all.bin
-SPI_HEX    := Q628_run.hex
+SPI_ARM_HEX    := Q628_run.hex
 CFG        := pack.conf
 ISP_IMG    := ispbooot.BIN
 EMMC_BOOT1 := emmc_boot1.hex
 EMMC_USER  := emmc_user0.hex
+SPI_RISCV_HEX := I143_run.hex
 
-BOOT_KERNEL_FROM_TFTP ?=
-TFTP_SERVER_PATH ?=
-
+BOOT_KERNEL_FROM_TFTP ?= 0
+TFTP_SERVER_PATH ?= 0
+CHIP ?= Q628
+ARCH ?= arm
 all: $(SPI_ALL)
 
 config:
@@ -18,11 +20,16 @@ config:
 
 $(SPI_ALL):
 	make config
-	bash ./update_all.sh $(SPI_ALL) $(ZEBU_RUN) $(BOOT_KERNEL_FROM_TFTP)
+	bash ./update_all.sh $(SPI_ALL) $(ZEBU_RUN) $(BOOT_KERNEL_FROM_TFTP) $(CHIP) $(ARCH) 
 	@if [ "$(ZEBU_RUN)" = '1' ]; then  \
 		echo ""; \
-		echo "* Gen NOR Hex : $(SPI_HEX)"; \
-		./tools/gen_hex.sh $(BIN)/$(SPI_ALL) $(BIN)/$(SPI_HEX); \
+		if [ "$(CHIP)" = "I143" ]; then  \
+			echo "* Gen NOR Hex : $(SPI_RISCV_HEX)" ;\
+			./tools/gen_hex.sh $(BIN)/$(SPI_ALL) $(BIN)/$(SPI_RISCV_HEX) ;\
+		else \
+			echo "* Gen NOR Hex : $(SPI_ARM_HEX)" ;\
+			./tools/gen_hex.sh $(BIN)/$(SPI_ALL) $(BIN)/$(SPI_ARM_HEX) ;\
+		fi ;\
 	fi
 	@if [ "$(BOOT_KERNEL_FROM_TFTP)" = '1' ]; then \
 		./copy2tftp.sh $(TFTP_SERVER_PATH); \
@@ -77,6 +84,7 @@ emmc_hex: all
 	@dd if=emmc_gpt/lba3.bin of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=3 >/dev/null 2>&1
 	@dd if=emmc_gpt/lba4.bin of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=4 >/dev/null 2>&1
 	@dd if=$(BIN)/u-boot.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x22) >/dev/null 2>&1
+	@dd if=$(BIN)/freertos.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x822) >/dev/null 2>&1
 	@dd if=$(BIN)/dtb.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x1422) >/dev/null 2>&1
 	@dd if=$(BIN)/uImage of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x1822) >/dev/null 2>&1
 	@hexdump -v -e '1/1 "%02x\n"' $(BIN)/emmc_user0.bin > $(BIN)/$(EMMC_USER)

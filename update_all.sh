@@ -83,7 +83,7 @@ else
 	echo "*******************************"
 	if [ "$CHIP" = "I143" ]; then
 		if [ "$ARCH" = "riscv" ]; then
-			riscv64-sifive-linux-gnu-objcopy -O binary -S ../boot/xboot/bin/xboot bin/$VMLINUX.bin
+			riscv64-sifive-linux-gnu-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
 			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0xA0200000 0xA0200000 kernel	#for xboot--kernel
 		else
 			armv5-glibc-linux-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
@@ -108,13 +108,12 @@ if [ "$DTB" != "" ];then
 	fi
 fi
 
-if [ "$CHIP" = "I143" ]; then
+if [ "$ARCH" = "riscv" ]; then
 	./update_me.sh ../freertos/build/FreeRTOS-simple.elf  && warn_up_ok $FREEROTS
 	riscv64-unknown-elf-objcopy -O binary -S ./bin/FreeRTOS-simple.elf bin/$FREEROTS.bin
-	if [ "$ARCH" = "riscv" ]; then
-		./add_uhdr.sh freertos-`date +%Y%m%d-%H%M%S` bin/$FREEROTS.bin bin/$FREEROTS.img $ARCH
-	fi
+	./add_uhdr.sh freertos-`date +%Y%m%d-%H%M%S` bin/$FREEROTS.bin bin/$FREEROTS.img $ARCH
 fi
+
 echo "* Check image..."
 # without iboot: use romcode iboot
 #exit_no_file bin/$BOOTROM
@@ -145,13 +144,14 @@ dd if=bin/dtb.img      of=bin/$IMG_OUT conv=notrunc bs=1k seek=128
 dd if=bin/$UBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
 if [ "$BOOT_KERNEL_FROM_TFTP" != "1" ]; then
 	#dd if=bin/$ECOS        of=bin/$IMG_OUT conv=notrunc bs=1M seek=1
-	if [ -f bin/$NONOS ]; then
+	if [ "$CHIP" = "I143" ]; then
+		if [ "$ARCH" = "riscv" ]; then
+			dd if=bin/$FREEROTS.img   of=bin/$IMG_OUT conv=notrunc bs=1k seek=1536 #1.5M
+		fi
+	elif [ -f bin/$NONOS ]; then
 		dd if=bin/$NONOS       of=bin/$IMG_OUT conv=notrunc bs=1M seek=1
 	fi
 	dd if=bin/$LINUX       of=bin/$IMG_OUT conv=notrunc bs=1M seek=6
-	if [ "$CHIP" = "I143" ]; then
-		dd if=bin/$FREEROTS.img       of=bin/$IMG_OUT conv=notrunc bs=1k seek=1536   #1.5M
-	fi
 fi
 
 ls -lh bin/$IMG_OUT

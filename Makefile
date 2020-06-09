@@ -20,7 +20,7 @@ config:
 
 $(SPI_ALL):
 	make config
-	bash ./update_all.sh $(SPI_ALL) $(ZEBU_RUN) $(BOOT_KERNEL_FROM_TFTP) $(CHIP) $(ARCH) 
+	DXTOR=0 bash ./update_all.sh $(SPI_ALL) $(ZEBU_RUN) $(BOOT_KERNEL_FROM_TFTP) $(CHIP) $(ARCH)
 	@if [ "$(ZEBU_RUN)" = '1' ]; then  \
 		echo ""; \
 		if [ "$(CHIP)" = "I143" ]; then  \

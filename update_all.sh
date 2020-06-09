@@ -48,8 +48,11 @@ UBOOT=u-boot.img
 ECOS=ecos.img
 NONOS=rom.img
 LINUX=uImage
+if [ "$ZEBU_RUN" = "1" ];then
+VMLINUX=vmlinux    # Use uncompressed uImage (qkboot + uncompressed vmlinux)
+else
 VMLINUX=            # Use compressed uImage
-#VMLINUX=vmlinux    # Use uncompressed uImage (qkboot + uncompressed vmlinux)
+fi
 DTB=dtb
 FREEROTS=freertos
 OPENSBI_KERNEL=OpenSBI_Kernel.img

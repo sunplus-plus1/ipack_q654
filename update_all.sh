@@ -49,7 +49,7 @@ ECOS=ecos.img
 NONOS=rom.img
 LINUX=uImage
 if [ "$ZEBU_RUN" = "1" ];then
-VMLINUX=vmlinux    # Use uncompressed uImage (qkboot + uncompressed vmlinux)
+VMLINUX=vmlinux   # Use uncompressed uImage (qkboot + uncompressed vmlinux)
 else
 VMLINUX=            # Use compressed uImage
 fi
@@ -78,7 +78,12 @@ if [ -f ../nonos/Bchip-non-os/bin/$NONOS ]; then
 fi
 
 if [ "$VMLINUX" = "" ];then
-	./update_me.sh ../$KPATH/arch/$ARCH/boot/$LINUX  || warn_no_up $LINUX
+	if [ "$ARCH" = "riscv" ]; then
+		./update_me.sh ../$KPATH/arch/$ARCH/boot/Image.gz  || warn_no_up Image.gz
+		./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/Image.gz bin/$LINUX $ARCH 0xA0200000 0xA0200000 kernel	#for xboot--kernel
+	else
+		./update_me.sh ../$KPATH/arch/$ARCH/boot/$LINUX  || warn_no_up $LINUX
+	fi
 else
 	./update_me.sh ../$KPATH/$VMLINUX && warn_up_ok $VMLINUX
 	echo "*******************************"

@@ -78,12 +78,7 @@ if [ -f ../nonos/Bchip-non-os/bin/$NONOS ]; then
 fi
 
 if [ "$VMLINUX" = "" ];then
-	if [ "$ARCH" = "riscv" ]; then
-		./update_me.sh ../$KPATH/arch/$ARCH/boot/Image.gz  || warn_no_up Image.gz
-		./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/Image.gz bin/$LINUX $ARCH 0xA0200000 0xA0200000 kernel	#for xboot--kernel
-	else
-		./update_me.sh ../$KPATH/arch/$ARCH/boot/$LINUX  || warn_no_up $LINUX
-	fi
+	./update_me.sh ../$KPATH/arch/$ARCH/boot/$LINUX  || warn_no_up $LINUX
 else
 	./update_me.sh ../$KPATH/$VMLINUX && warn_up_ok $VMLINUX
 	echo "*******************************"

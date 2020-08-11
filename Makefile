@@ -32,7 +32,11 @@ $(SPI_ALL):
 		fi ;\
 	fi
 	@if [ "$(BOOT_KERNEL_FROM_TFTP)" = '1' ]; then \
-		./copy2tftp.sh $(TFTP_SERVER_PATH); \
+		if [ "$(CHIP)" = "I143" ]; then  \
+			./copy2tftp_riscv.sh $(TFTP_SERVER_PATH);\
+		else \
+			./copy2tftp.sh $(TFTP_SERVER_PATH);\
+		fi;\
 	fi
 
 ###############################

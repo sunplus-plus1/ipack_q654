@@ -8,7 +8,7 @@ IMG_OUT=$1
 ZEBU_RUN=$2
 BOOT_KERNEL_FROM_TFTP=$3
 CHIP=$4
-ARCH=$5 
+ARCH=$5
 
 if [ "IMG_OUT" = "" ];then
 	echo "Error: no output file name"
@@ -45,7 +45,6 @@ warn_up_ok()
 BOOTROM=bootRom.bin
 XBOOT=xboot.img
 UBOOT=u-boot.img
-ECOS=ecos.img
 NONOS=rom.img
 LINUX=uImage
 if [ "$ZEBU_RUN" = "1" ];then
@@ -59,9 +58,6 @@ OPENSBI_KERNEL=OpenSBI_Kernel.img
 KPATH=linux/kernel/
 
 # Use uncompressed version first
-if [ -f ../ecos/bin/$ECOS.orig ];then
-	ECOS=$ECOS.orig
-fi
 
 echo "* Update from source images..."
 if [ "$pf_type" = "s" ];then
@@ -71,7 +67,6 @@ elif [ "$pf_type" = "x" ];then
 	./update_me.sh ../boot/xboot/bin/$XBOOT   && warn_up_ok $XBOOT
 fi
 ./update_me.sh ../boot/uboot/$UBOOT  && warn_up_ok $UBOOT
-#./update_me.sh ../ecos/bin/$ECOS  && warn_up_ok $ECOS
 
 if [ -f ../nonos/Bchip-non-os/bin/$NONOS ]; then
 	./update_me.sh ../nonos/Bchip-non-os/bin/$NONOS  && warn_up_ok $NONOS
@@ -124,7 +119,7 @@ exit_no_file bin/$XBOOT
 if [ "$CHIP" = "I143" ]; then
 	if [ -f ../boot/xboot/bin/$OPENSBI_KERNEL ]; then
 		rm -f bin/$OPENSBI_KERNEL
-		./update_me.sh ../boot/xboot/bin/$OPENSBI_KERNEL && warn_up_ok $OPENSBI_KERNEL 
+		./update_me.sh ../boot/xboot/bin/$OPENSBI_KERNEL && warn_up_ok $OPENSBI_KERNEL
 		if [ "$ARCH" = "riscv" ]; then
 			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0xA0200000 0xA0200000 	#for xboot--kernel
 		else
@@ -146,28 +141,36 @@ dd if=bin/$XBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=64
 dd if=bin/dtb.img      of=bin/$IMG_OUT conv=notrunc bs=1k seek=128
 dd if=bin/$UBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
 if [ "$BOOT_KERNEL_FROM_TFTP" != "1" ]; then
-	#dd if=bin/$ECOS        of=bin/$IMG_OUT conv=notrunc bs=1M seek=1
 	if [ "$CHIP" = "I143" ]; then
 		if [ "$ARCH" = "riscv" ]; then
 			dd if=bin/$FREEROTS.img   of=bin/$IMG_OUT conv=notrunc bs=1k seek=1536 #1.5M
 		fi
-	elif [ -f bin/$NONOS ]; then
-		dd if=bin/$NONOS       of=bin/$IMG_OUT conv=notrunc bs=1M seek=1
+		dd if=bin/$LINUX       of=bin/$IMG_OUT conv=notrunc bs=1M seek=6
+
+		ls -lh bin/$IMG_OUT
+
+		# check linux image size
+		kernel_sz=`du -sb bin/$LINUX | cut -f1`
+		if [ $kernel_sz -gt $((0xA00000)) ]; then
+			echo -e "${YELLOW}Warning: $LINUX size ($kernel_sz) is big. Need bigger SPI_NOR flash (>16MB)!${NC}"
+		fi
+	else
+		if [ -f bin/$NONOS ]; then
+			dd if=bin/$NONOS       of=bin/$IMG_OUT conv=notrunc bs=1M seek=1
+		fi
+		dd if=bin/$LINUX       of=bin/$IMG_OUT conv=notrunc bs=1M seek=2
+
+		ls -lh bin/$IMG_OUT
+
+		# check linux image size
+		kernel_sz=`du -sb bin/$LINUX | cut -f1`
+		if [ $kernel_sz -gt $((0xE00000)) ]; then
+			echo -e "${YELLOW}Warning: $LINUX size ($kernel_sz) is big. Need bigger SPI_NOR flash (>16MB)!${NC}"
+		fi
 	fi
-	dd if=bin/$LINUX       of=bin/$IMG_OUT conv=notrunc bs=1M seek=6
 fi
 
-ls -lh bin/$IMG_OUT
-
-if [ "$BOOT_KERNEL_FROM_TFTP" != "1" ]; then
-	# check linux image size
-	kernel_sz=`du -sb bin/$LINUX | cut -f1`
-	if [ $kernel_sz -gt $((0xA00000)) ]; then
-		echo -e "${YELLOW}Warning: $LINUX size ($kernel_sz) is big. Need bigger SPI_NOR flash (>16MB)!${NC}"
-	fi
-fi
-
-if [ "$ZEBU_RUN" = "1" ];then 
+if [ "$ZEBU_RUN" = "1" ]; then
 	B2ZMEM=./tools/bin2zmem/bin2zmem
 	ZMEM_HEX=./bin/zmem.hex
 	make -C ./tools/bin2zmem
@@ -184,7 +187,6 @@ if [ "$ZEBU_RUN" = "1" ];then
 	#        in               out           in_skip     DRAM_off
 	if [ "$CHIP" != "I143" ]; then
 	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
-	#$B2ZMEM  bin/$ECOS        $ZMEM_HEX     0x0       0x0010000             $DXTOR # 64KB
 	$B2ZMEM  bin/$NONOS       $ZMEM_HEX     0x0       0x0010000             $DXTOR # 64KB
 	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x0200000             $DXTOR # 2MB  (uboot before relocation)
 	$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) $DXTOR # 3MB - 64

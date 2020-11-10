@@ -13,6 +13,8 @@ BOOT_KERNEL_FROM_TFTP ?= 0
 TFTP_SERVER_PATH ?= 0
 CHIP ?= Q628
 ARCH ?= arm
+
+
 all: $(SPI_ALL)
 
 config:
@@ -20,7 +22,7 @@ config:
 
 $(SPI_ALL):
 	make config
-	DXTOR=0 bash ./update_all.sh $(SPI_ALL) $(ZEBU_RUN) $(BOOT_KERNEL_FROM_TFTP) $(CHIP) $(ARCH)
+	DXTOR=0 bash ./update_all.sh $(SPI_ALL) $(ZEBU_RUN) $(BOOT_KERNEL_FROM_TFTP) $(CHIP) $(ARCH) $(NOR_JFFS2)
 	@if [ "$(ZEBU_RUN)" = '1' ]; then  \
 		echo ""; \
 		if [ "$(CHIP)" = "I143" ]; then  \

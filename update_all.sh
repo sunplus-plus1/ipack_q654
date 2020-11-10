@@ -9,6 +9,7 @@ ZEBU_RUN=$2
 BOOT_KERNEL_FROM_TFTP=$3
 CHIP=$4
 ARCH=$5
+NOR_JFFS2=$6
 
 if [ "IMG_OUT" = "" ];then
 	echo "Error: no output file name"
@@ -47,6 +48,8 @@ XBOOT=xboot.img
 UBOOT=u-boot.img
 NONOS=rom.img
 LINUX=uImage
+ROOTFS=rootfs.img
+
 if [ "$ZEBU_RUN" = "1" ];then
 VMLINUX=vmlinux   # Use uncompressed uImage (qkboot + uncompressed vmlinux)
 else
@@ -56,8 +59,6 @@ DTB=dtb
 FREEROTS=freertos
 OPENSBI_KERNEL=OpenSBI_Kernel.img
 KPATH=linux/kernel/
-
-# Use uncompressed version first
 
 echo "* Update from source images..."
 if [ "$pf_type" = "s" ];then
@@ -87,8 +88,8 @@ else
 			armv5-glibc-linux-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
 			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x20208000 0x20208000 kernel	#for xboot--kernel
 		fi
- 	else
-        armv5-glibc-linux-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
+	else
+		armv5-glibc-linux-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
 		./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x308000 0x308000 kernel
 	fi
 fi
@@ -160,12 +161,31 @@ if [ "$BOOT_KERNEL_FROM_TFTP" != "1" ]; then
 		fi
 		dd if=bin/$LINUX       of=bin/$IMG_OUT conv=notrunc bs=1M seek=2
 
-		ls -lh bin/$IMG_OUT
+		if [ "$NOR_JFFS2" == "1" ]; then
+			# Generate jffs2 rootfs for SPI-NOR
+			bash ./gen_nor_jffs2.sh
+			if [ $? -ne 0 ]; then
+				exit 1;
+			fi
 
-		# check linux image size
-		kernel_sz=`du -sb bin/$LINUX | cut -f1`
-		if [ $kernel_sz -gt $((0xE00000)) ]; then
-			echo -e "${YELLOW}Warning: $LINUX size ($kernel_sz) is big. Need bigger SPI_NOR flash (>16MB)!${NC}"
+			# Get size of Linux image (in unit of byte).
+			kernel_sz=`du -sb bin/$LINUX | cut -f1`
+
+			# Align size of Linux image to 64 boundary (in unit of 1 kbytes)
+			kernel_sz_1k=$((((kernel_sz+65535)/65536)*64))
+
+			# Calculate offset of rootfs.
+			rootfs_offset=$((kernel_sz_1k+2048))
+
+			dd if=bin/$ROOTFS       of=bin/$IMG_OUT conv=notrunc bs=1k seek=$rootfs_offset
+
+			ls -l bin/$IMG_OUT
+		else
+			# Check linux image size
+			kernel_sz=`du -sb bin/$LINUX | cut -f1`
+			if [ $kernel_sz -gt $((0xe00000)) ]; then
+				echo -e "${YELLOW}Warning: $LINUX size ($kernel_sz) is too big. Need bigger SPI_NOR flash (>16MB)!${NC}"
+			fi
 		fi
 	fi
 fi

@@ -3,7 +3,11 @@
 *.o
 *.bin
 *.img
+*.elf
+*.hex
 
 pack.conf
 bin/dtb
 bin/uImage
+bin/vmlinux
+tools/bin2zmem/bin2zmem

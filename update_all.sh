@@ -62,7 +62,11 @@ KPATH=linux/kernel/
 
 echo "* Update from source images..."
 if [ "$pf_type" = "s" ];then
-	./update_me.sh ../boot/iboot/bin/$BOOTROM && warn_up_ok $BOOTROM
+	if [ "$CHIP" = "Q628" ]; then
+		./update_me.sh ../boot/iboot/iboot_q628/bin/$BOOTROM && warn_up_ok $BOOTROM
+	elif [ "$CHIP" = "Q645" ]; then
+		./update_me.sh ../boot/iboot/iboot_q645/bin/$BOOTROM && warn_up_ok $BOOTROM
+	fi
 	./update_me.sh ../boot/xboot/bin/$XBOOT   && warn_up_ok $XBOOT
 elif [ "$pf_type" = "x" ];then
 	./update_me.sh ../boot/xboot/bin/$XBOOT   && warn_up_ok $XBOOT

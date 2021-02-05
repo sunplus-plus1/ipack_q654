@@ -142,9 +142,17 @@ if [ -f bin/$BOOTROM ]; then
 else
 	rm -f bin/$IMG_OUT
 fi
-dd if=bin/$XBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=64
-dd if=bin/dtb.img      of=bin/$IMG_OUT conv=notrunc bs=1k seek=128
-dd if=bin/$UBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
+
+if [ "$CHIP" = "Q645" ]; then
+	dd if=bin/$XBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=96
+	dd if=bin/dtb.img      of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
+	dd if=bin/$UBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=384
+else
+	dd if=bin/$XBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=64
+	dd if=bin/dtb.img      of=bin/$IMG_OUT conv=notrunc bs=1k seek=128
+	dd if=bin/$UBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
+fi
+
 if [ "$BOOT_KERNEL_FROM_TFTP" != "1" ]; then
 	if [ "$CHIP" = "I143" ]; then
 		if [ "$ARCH" = "riscv" ]; then
@@ -161,9 +169,17 @@ if [ "$BOOT_KERNEL_FROM_TFTP" != "1" ]; then
 		fi
 	else
 		if [ -f bin/$NONOS ]; then
-			dd if=bin/$NONOS       of=bin/$IMG_OUT conv=notrunc bs=1M seek=1
+			if [ "$CHIP" = "Q645" ]; then
+				dd if=bin/$NONOS       of=bin/$IMG_OUT conv=notrunc bs=1k seek=1152
+			else
+				dd if=bin/$NONOS       of=bin/$IMG_OUT conv=notrunc bs=1k seek=1024
+			fi
 		fi
-		dd if=bin/$LINUX       of=bin/$IMG_OUT conv=notrunc bs=1M seek=2
+		if [ "$CHIP" = "Q645" ]; then
+			dd if=bin/$LINUX       of=bin/$IMG_OUT conv=notrunc bs=1k seek=2176
+		else
+			dd if=bin/$LINUX       of=bin/$IMG_OUT conv=notrunc bs=1k seek=2048
+		fi
 
 		if [ "$NOR_JFFS2" == "1" ]; then
 			# Generate jffs2 rootfs for SPI-NOR

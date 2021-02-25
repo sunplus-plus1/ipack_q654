@@ -2,18 +2,15 @@
 
 BIN        := bin
 SPI_ALL    := spi_all.bin
-SPI_ARM_HEX    := Q628_run.hex
 CFG        := pack.conf
 ISP_IMG    := ispbooot.BIN
 EMMC_BOOT1 := emmc_boot1.hex
 EMMC_USER  := emmc_user0.hex
-SPI_RISCV_HEX := I143_run.hex
 
 BOOT_KERNEL_FROM_TFTP ?= 0
 TFTP_SERVER_PATH ?= 0
 CHIP ?= Q628
 ARCH ?= arm
-
 
 all: $(SPI_ALL)
 
@@ -25,13 +22,8 @@ $(SPI_ALL):
 	DXTOR=0 bash ./update_all.sh $(SPI_ALL) $(ZEBU_RUN) $(BOOT_KERNEL_FROM_TFTP) $(CHIP) $(ARCH) $(NOR_JFFS2)
 	@if [ "$(ZEBU_RUN)" = '1' ]; then  \
 		echo ""; \
-		if [ "$(CHIP)" = "I143" ]; then  \
-			echo "* Gen NOR Hex : $(SPI_RISCV_HEX)" ;\
-			./tools/gen_hex.sh $(BIN)/$(SPI_ALL) $(BIN)/$(SPI_RISCV_HEX) ;\
-		else \
-			echo "* Gen NOR Hex : $(SPI_ARM_HEX)" ;\
-			./tools/gen_hex.sh $(BIN)/$(SPI_ALL) $(BIN)/$(SPI_ARM_HEX) ;\
-		fi ;\
+		echo "* Gen NOR Hex : $(CHIP)_run.hex" ;\
+		./tools/gen_hex.sh $(BIN)/$(SPI_ALL) $(BIN)/$(CHIP)_run.hex ;\
 	fi
 	@if [ "$(BOOT_KERNEL_FROM_TFTP)" = '1' ]; then \
 		if [ "$(CHIP)" = "I143" ]; then  \

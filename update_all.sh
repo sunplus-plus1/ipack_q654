@@ -11,6 +11,7 @@ CHIP=$4
 ARCH=$5
 NOR_JFFS2=$6
 
+
 if [ "IMG_OUT" = "" ];then
 	echo "Error: no output file name"
 	exit 1
@@ -203,7 +204,7 @@ if [ "$BOOT_KERNEL_FROM_TFTP" != "1" ]; then
 		else
 			# Check linux image size
 			kernel_sz=`du -sb bin/$LINUX | cut -f1`
-			if [ $kernel_sz -gt $((0xe00000)) ]; then
+			if [[ $kernel_sz -gt $((0xe00000)) ]]; then
 				echo -e "${YELLOW}Warning: $LINUX size ($kernel_sz) is too big. Need bigger SPI_NOR flash (>16MB)!${NC}"
 			fi
 		fi
@@ -225,14 +226,18 @@ if [ "$ZEBU_RUN" = "1" ]; then
 	fi
 	rm -f $ZMEM_HEX
 	#        in               out           in_skip     DRAM_off
-	if [ "$CHIP" != "I143" ]; then
+	if [ "$CHIP" == "Q645" ]; then
+	DXTOR=1	#Q645 use real dram. DXTOR=1
+	B2ZMEM=./tools/bin2zmem/bin2zmem_q645
+	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
+	elif [ "$CHIP" == "Q628" ]; then
 	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
 	$B2ZMEM  bin/$NONOS       $ZMEM_HEX     0x0       0x0010000             $DXTOR # 64KB
 	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x0200000             $DXTOR # 2MB  (uboot before relocation)
 	$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) $DXTOR # 3MB - 64
 	$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0308000 - 0x40)) $DXTOR # 3MB + 32KB - 64
 	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x1F00000             $DXTOR # 31MB (uboot after relocation)
-	else
+	elif [ "$CHIP" == "I143" ]; then
 	#RISCV zmem Memory:{freertos|xboot|uboot|opensbi|dtb|kernel}
 	$B2ZMEM  bin/$FREEROTS.img  $ZMEM_HEX     0x0       0x00000000 	       		$DXTOR # 0
 	$B2ZMEM  bin/$XBOOT       	$ZMEM_HEX     0x0       0x000F0000            	$DXTOR # 4KB
@@ -248,7 +253,7 @@ if [ "$ZEBU_RUN" = "1" ]; then
 	ls -lh $ZMEM_HEX
 
 	# check linux image size
-	if [ $kernel_sz -gt $((0x1F00000 - 0x0308000)) ];then
+	if [[ $kernel_sz -gt $((0x1F00000)) ]]; then
 		echo -e "${YELLOW}Error: $LINUX size ($kernel_sz) is too big in ZMEM arrangement!${NC}"
 		exit 1
 	fi

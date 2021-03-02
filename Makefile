@@ -37,8 +37,12 @@ $(SPI_ALL):
 # Pack for isp boot testing
 isp: all
 	@echo "Build $(ISP_IMG)"
-	@dd if=bin/xboot.img    of=$(BIN)/$(ISP_IMG)
-	@dd if=bin/u-boot.img   of=$(BIN)/$(ISP_IMG) conv=notrunc bs=1k seek=64
+	@dd if=bin/xboot.img of=$(BIN)/$(ISP_IMG)
+	@if [ "$(CHIP)" = "Q645" ]; then \
+		dd if=bin/u-boot.img of=$(BIN)/$(ISP_IMG) conv=notrunc bs=1k seek=160 ; \
+	else \
+		dd if=bin/u-boot.img of=$(BIN)/$(ISP_IMG) conv=notrunc bs=1k seek=64 ; \
+	fi;
 ###############################
 
 # To create isp disk hex for zebu
@@ -90,12 +94,12 @@ emmc_hex: all
 
 zebu_hex_dxtor:
 	@./configure.sh x # x for zebu
-	DXTOR=1 bash ./update_all.sh $(SPI_ALL) 1 0
+	DXTOR=1 bash ./update_all.sh $(SPI_ALL) 1 0 $(CHIP) $(ARCH) 0
 	@echo ""
 
 zebu_hex_fakedram:
 	@./configure.sh x # x for zebu
-	DXTOR=0 bash ./update_all.sh $(SPI_ALL) 1 0
+	DXTOR=0 bash ./update_all.sh $(SPI_ALL) 1 0 $(CHIP) $(ARCH) 0
 	@echo ""
 
 dxtor:

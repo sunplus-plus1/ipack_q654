@@ -1,5 +1,6 @@
 #./update_me.sh <source_img>
 
+export PATH="../crossgcc/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu/bin/:$PATH"
 export PATH="../crossgcc/armv5-eabi--glibc--stable/bin/:$PATH"
 export PATH="../crossgcc/riscv64-sifive-linux-gnu/bin/:$PATH"
 export PATH="../crossgcc/riscv64-unknown-elf/bin/:$PATH"
@@ -50,6 +51,7 @@ UBOOT=u-boot.img
 NONOS=rom.img
 LINUX=uImage
 ROOTFS=rootfs.img
+BL31=bl31.img
 
 if [ "$ZEBU_RUN" = "1" ];then
 VMLINUX=vmlinux   # Use uncompressed uImage (qkboot + uncompressed vmlinux)
@@ -94,8 +96,13 @@ else
 			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x20208000 0x20208000 kernel	#for xboot--kernel
 		fi
 	else
-		armv5-glibc-linux-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
-		./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x308000 0x308000 kernel
+		if [ "$CHIP" = "Q628" ]; then
+			armv5-glibc-linux-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
+			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x308000 0x308000 kernel
+		elif [ "$CHIP" = "Q645" ]; then
+			aarch64-none-linux-gnu-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
+			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x480000 0x480000 kernel
+		fi
 	fi
 fi
 
@@ -116,6 +123,10 @@ if [ "$ARCH" = "riscv" ]; then
 	./update_me.sh ../freertos/build/FreeRTOS-simple.elf  && warn_up_ok $FREEROTS
 	riscv64-unknown-elf-objcopy -O binary -S ./bin/FreeRTOS-simple.elf bin/$FREEROTS.bin
 	./add_uhdr.sh freertos-`date +%Y%m%d-%H%M%S` bin/$FREEROTS.bin bin/$FREEROTS.img $ARCH
+fi
+
+if [ "$CHIP" = "Q645" ]; then
+./update_me.sh ../boot/trusted-firmware-a/build/$BL31  && warn_up_ok $BL31
 fi
 
 echo "* Check image..."
@@ -227,9 +238,13 @@ if [ "$ZEBU_RUN" = "1" ]; then
 	rm -f $ZMEM_HEX
 	#        in               out           in_skip     DRAM_off
 	if [ "$CHIP" == "Q645" ]; then
+	rm -f ./bin/zmem2.hex
 	DXTOR=1	#Q645 use real dram. DXTOR=1
 	B2ZMEM=./tools/bin2zmem/bin2zmem_q645
 	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
+	$B2ZMEM  bin/$BL31        $ZMEM_HEX     0x0       $((0x0200000 - 0x40)) $DXTOR # 3MB - 64
+	$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) $DXTOR # 3MB - 64
+#	$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0480000 - 0x40)) $DXTOR # 3MB + 32KB - 64
 	elif [ "$CHIP" == "Q628" ]; then
 	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
 	$B2ZMEM  bin/$NONOS       $ZMEM_HEX     0x0       0x0010000             $DXTOR # 64KB
@@ -251,7 +266,6 @@ if [ "$ZEBU_RUN" = "1" ]; then
 	#$B2ZMEM  bin/initramfs.img	$ZMEM_HEX     0x0		$((0x02000000 - 0x40))	$DXTOR
 	fi
 	ls -lh $ZMEM_HEX
-
 	# check linux image size
 	if [[ $kernel_sz -gt $((0x1F00000)) ]]; then
 		echo -e "${YELLOW}Error: $LINUX size ($kernel_sz) is too big in ZMEM arrangement!${NC}"

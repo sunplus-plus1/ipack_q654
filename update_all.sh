@@ -101,7 +101,7 @@ else
 			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x308000 0x308000 kernel
 		elif [ "$CHIP" = "Q645" ]; then
 			aarch64-none-linux-gnu-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
-			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x480000 0x480000 kernel
+			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x480000 0x480000
 		fi
 	fi
 fi
@@ -157,8 +157,8 @@ fi
 
 if [ "$CHIP" = "Q645" ]; then
 	dd if=bin/$XBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=96
-	dd if=bin/dtb.img      of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
-	dd if=bin/$UBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=384
+#	dd if=bin/dtb.img      of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
+#	dd if=bin/$UBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=384
 else
 	dd if=bin/$XBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=64
 	dd if=bin/dtb.img      of=bin/$IMG_OUT conv=notrunc bs=1k seek=128
@@ -242,9 +242,10 @@ if [ "$ZEBU_RUN" = "1" ]; then
 	DXTOR=1	#Q645 use real dram. DXTOR=1
 	B2ZMEM=./tools/bin2zmem/bin2zmem_q645
 	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
-	$B2ZMEM  bin/$BL31        $ZMEM_HEX     0x0       $((0x0200000 - 0x40)) $DXTOR # 3MB - 64
-	$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) $DXTOR # 3MB - 64
-#	$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0480000 - 0x40)) $DXTOR # 3MB + 32KB - 64
+	$B2ZMEM  bin/$BL31        $ZMEM_HEX     0x0       $((0x0200000 - 0x40)) $DXTOR # 2MB - 64
+	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x0300000 			$DXTOR # 3MB
+	$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x0400000 - 0x40)) $DXTOR # 4MB - 64
+	$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0480000 - 0x40)) $DXTOR # 3MB + 32KB - 64
 	elif [ "$CHIP" == "Q628" ]; then
 	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
 	$B2ZMEM  bin/$NONOS       $ZMEM_HEX     0x0       0x0010000             $DXTOR # 64KB

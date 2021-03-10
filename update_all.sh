@@ -157,8 +157,8 @@ fi
 
 if [ "$CHIP" = "Q645" ]; then
 	dd if=bin/$XBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=96
-#	dd if=bin/dtb.img      of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
-#	dd if=bin/$UBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=384
+	dd if=bin/dtb.img      of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
+	dd if=bin/$UBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=384
 else
 	dd if=bin/$XBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=64
 	dd if=bin/dtb.img      of=bin/$IMG_OUT conv=notrunc bs=1k seek=128

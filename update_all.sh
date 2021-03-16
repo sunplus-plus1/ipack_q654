@@ -49,9 +49,16 @@ BOOTROM=bootRom.bin
 XBOOT=xboot.img
 UBOOT=u-boot.img
 NONOS=rom.img
-LINUX=uImage
 ROOTFS=rootfs.img
 BL31=bl31.img
+
+if [ "$CHIP" = "Q645" ]; then
+LINUX=Image.gz
+kernel_max_size=$((0xde0000))
+else
+LINUX=uImage
+kernel_max_size=$((0xe00000))
+fi
 
 if [ "$ZEBU_RUN" = "1" ];then
 VMLINUX=vmlinux   # Use uncompressed uImage (qkboot + uncompressed vmlinux)
@@ -76,8 +83,10 @@ elif [ "$pf_type" = "x" ];then
 fi
 ./update_me.sh ../boot/uboot/$UBOOT  && warn_up_ok $UBOOT
 
-if [ -f ../nonos/Bchip-non-os/bin/$NONOS ]; then
-	./update_me.sh ../nonos/Bchip-non-os/bin/$NONOS  && warn_up_ok $NONOS
+if [ "$CHIP" == "Q628" ]; then
+	if [ -f ../nonos/Bchip-non-os/bin/$NONOS ]; then
+		./update_me.sh ../nonos/Bchip-non-os/bin/$NONOS  && warn_up_ok $NONOS
+	fi
 fi
 
 if [ "$VMLINUX" = "" ];then
@@ -215,7 +224,7 @@ if [ "$BOOT_KERNEL_FROM_TFTP" != "1" ]; then
 		else
 			# Check linux image size
 			kernel_sz=`du -sb bin/$LINUX | cut -f1`
-			if [[ $kernel_sz -gt $((0xe00000)) ]]; then
+			if [[ $kernel_sz -gt $kernel_max_size ]]; then
 				echo -e "${YELLOW}Warning: $LINUX size ($kernel_sz) is too big. Need bigger SPI_NOR flash (>16MB)!${NC}"
 			fi
 		fi

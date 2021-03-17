@@ -95,7 +95,11 @@ emmc_hex: all
 		dd if=$(BIN)/freertos.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x822) >/dev/null 2>&1 ; \
 	fi;
 	@dd if=$(BIN)/dtb.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x1422) >/dev/null 2>&1
-	@dd if=$(BIN)/uImage of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x1822) >/dev/null 2>&1
+	@if [ "$(CHIP)" = "Q645" ]; then \
+		dd if=$(BIN)/Image.gz of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x1822) >/dev/null 2>&1 ; \
+	else \
+		dd if=$(BIN)/uImage of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x1822) >/dev/null 2>&1 ; \
+	fi;
 	@hexdump -v -e '1/1 "%02x\n"' $(BIN)/emmc_user0.bin > $(BIN)/$(EMMC_USER)
 	@ls -l $(BIN)/$(EMMC_USER)
 

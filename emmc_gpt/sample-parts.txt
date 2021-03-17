@@ -1,10 +1,10 @@
-=> setenv partitions "uuid_disk=${uuid_gpt_disk};name=uboot1,size=1MiB,uuid=${uuid_gpt_uboot1};name=uboot2,size=1MiB,uuid=${uuid_gpt_uboot2};name=env,size=512KiB,uuid=${uuid_gpt_env};name=dtb,size=512KiB,uuid=${uuid_gpt_dtb};name=linux,size=8MiB,uuid=${uuid_gpt_linux};name=ecos,size=4MiB,uuid=${uuid_gpt_ecos};name=userdata,size=4MiB,uuid=${uuid_gpt_userdata};"
+=> setenv partitions "uuid_disk=00042021-0408-4601-9dcc-a8c51255994f;name=uboot1,uuid=77877125-add0-4374-9e60-02cb591c9737,size=1MiB;name=uboot2,uuid=b4b84b8a-04e3-48ae-8536-aff5c9c495b1,size=1MiB;name=env,uuid=35219908-c613-4b08-9322-3391ff571e19,size=512KiB;name=env_redund,uuid=8e123a33-e3d3-4db9-92f4-d3ebd9b3224f,size=512KiB;name=nonos,uuid=02a90af2-5d1c-4a29-9177-97a513e3cae4,size=1MiB;name=dtb,uuid=3d5088db-a534-413e-836d-c757cb682814,size=256KiB;name=kernel,uuid=03332b01-ac34-4d28-99b4-34e03a2335f4,size=32MiB;name=rootfs,uuid=cf2eecfa-4485-41e2-b19d-757e796da607,size=16MiB;"
 =>
 => gpt write mmc 0 $partitions
 Writing GPT: success!
 =>
-Writing GPT: success!
 => mmc dev 0 && mmc rescan && mmc part
+switch to partitions #0, OK
 mmc0(part 0) is current device
 
 Partition Map for MMC device 0  --   Partition Type: EFI
@@ -16,30 +16,33 @@ Part    Start LBA       End LBA         Name
   1     0x00000022      0x00000821      "uboot1"
         attrs:  0x0000000000000000
         type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
-        guid:   12262d0a-0973-c54d-8683-263d6ad674ff
+        guid:   77877125-add0-4374-9e60-02cb591c9737
   2     0x00000822      0x00001021      "uboot2"
         attrs:  0x0000000000000000
         type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
-        guid:   bb1d712d-09d6-d841-b479-40e110c0f4b3
+        guid:   b4b84b8a-04e3-48ae-8536-aff5c9c495b1
   3     0x00001022      0x00001421      "env"
         attrs:  0x0000000000000000
         type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
-        guid:   98e084c4-6e4a-b346-97b6-ab0f183a26e4
-  4     0x00001422      0x00001821      "dtb"
+        guid:   35219908-c613-4b08-9322-3391ff571e19
+  4     0x00001422      0x00001821      "env_redund"
         attrs:  0x0000000000000000
         type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
-        guid:   779a37c0-555c-ab4a-9f00-a04b6a317c2f
-  5     0x00001822      0x00005821      "linux"
+        guid:   8e123a33-e3d3-4db9-92f4-d3ebd9b3224f
+  5     0x00001822      0x00002021      "nonos"
         attrs:  0x0000000000000000
         type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
-        guid:   556023f3-187a-e147-a869-dff3a16d1138
-  6     0x00005822      0x00007821      "ecos"
+        guid:   02a90af2-5d1c-4a29-9177-97a513e3cae4
+  6     0x00002022      0x00002221      "dtb"
         attrs:  0x0000000000000000
         type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
-        guid:   3d03086a-9d27-4a47-a3fe-6ff02e0306f0
-  7     0x00007822      0x00009821      "userdata"
+        guid:   3d5088db-a534-413e-836d-c757cb682814
+  7     0x00002222      0x00012221      "kernel"
         attrs:  0x0000000000000000
         type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
-        guid:   9525e51a-ac74-7e4d-8564-c01f718e9b2c
+        guid:   03332b01-ac34-4d28-99b4-34e03a2335f4
+  8     0x00012222      0x0001a221      "rootfs"
+        attrs:  0x0000000000000000
+        type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
+        guid:   cf2eecfa-4485-41e2-b19d-757e796da607
 =>
-

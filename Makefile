@@ -85,21 +85,23 @@ emmc_hex: all
 	@ls -l $(BIN)/$(EMMC_BOOT1)
 	@echo ""
 	@echo "* Gen eMMC user hex: $(EMMC_USER)"
-	@dd if=emmc_gpt/lba0.bin of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 >/dev/null 2>&1
+	@dd if=emmc_gpt/lba0.bin of=$(BIN)/emmc_user0.bin              bs=512 >/dev/null 2>&1
 	@dd if=emmc_gpt/lba1.bin of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=1 >/dev/null 2>&1
 	@dd if=emmc_gpt/lba2.bin of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=2 >/dev/null 2>&1
 	@dd if=emmc_gpt/lba3.bin of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=3 >/dev/null 2>&1
 	@dd if=emmc_gpt/lba4.bin of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=4 >/dev/null 2>&1
 	@dd if=$(BIN)/u-boot.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x22) >/dev/null 2>&1
+	@dd if=$(BIN)/u-boot.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x822) >/dev/null 2>&1
 	@if [ "$(CHIP)" = "I143" ]; then \
-		dd if=$(BIN)/freertos.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x822) >/dev/null 2>&1 ; \
+		dd if=$(BIN)/freertos.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x1822) >/dev/null 2>&1 ; \
 	fi;
-	@dd if=$(BIN)/dtb.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x1422) >/dev/null 2>&1
+	@dd if=$(BIN)/dtb.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x2022) >/dev/null 2>&1
 	@if [ "$(CHIP)" = "Q645" ]; then \
-		dd if=$(BIN)/Image.gz of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x1822) >/dev/null 2>&1 ; \
+		dd if=$(BIN)/Image.gz of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x2222) >/dev/null 2>&1 ; \
 	else \
-		dd if=$(BIN)/uImage of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x1822) >/dev/null 2>&1 ; \
+		dd if=$(BIN)/uImage of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x2222) >/dev/null 2>&1 ; \
 	fi;
+	@dd if=$(BIN)/rootfs.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x12222) >/dev/null 2>&1
 	@hexdump -v -e '1/1 "%02x\n"' $(BIN)/emmc_user0.bin > $(BIN)/$(EMMC_USER)
 	@ls -l $(BIN)/$(EMMC_USER)
 

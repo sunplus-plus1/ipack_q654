@@ -50,7 +50,6 @@ XBOOT=xboot.img
 UBOOT=u-boot.img
 NONOS=rom.img
 ROOTFS=rootfs.img
-BL31=bl31.img
 
 if [ "$CHIP" = "Q645" ]; then
 LINUX=Image.gz
@@ -134,9 +133,6 @@ if [ "$ARCH" = "riscv" ]; then
 	./add_uhdr.sh freertos-`date +%Y%m%d-%H%M%S` bin/$FREEROTS.bin bin/$FREEROTS.img $ARCH
 fi
 
-if [ "$CHIP" = "Q645" ]; then
-./update_me.sh ../boot/trusted-firmware-a/build/$BL31  && warn_up_ok $BL31
-fi
 
 echo "* Check image..."
 # without iboot: use romcode iboot
@@ -251,7 +247,6 @@ if [ "$ZEBU_RUN" = "1" ]; then
 	DXTOR=1	#Q645 use real dram. DXTOR=1
 	B2ZMEM=./tools/bin2zmem/bin2zmem_q645
 	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
-	$B2ZMEM  bin/$BL31        $ZMEM_HEX     0x0       $((0x0200000 - 0x40)) $DXTOR # 2MB - 64
 	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x0300000 			$DXTOR # 3MB
 	$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x0400000 - 0x40)) $DXTOR # 4MB - 64
 	$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0480000 - 0x40)) $DXTOR # 3MB + 32KB - 64

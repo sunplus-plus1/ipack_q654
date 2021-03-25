@@ -14,3 +14,4 @@ bin/zImage
 bin/Image.gz
 tools/bin2zmem/bin2zmem
 tools/bin2zmem/bin2zmem_q645
+nand/*.raw

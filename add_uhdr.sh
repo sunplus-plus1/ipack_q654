@@ -3,10 +3,10 @@
 # $1: image name
 # $2: source image
 # $3: output image
-# $4: arm or riscv
+# $4: arch (arm or riscv)
 # $5: load address    (optional)
 # $6: execute address (optional)
-# $7: vmlinux used type=kernel
+# $7: type (vmlinux used type=kernel)
 NAME="$1"
 SRC="$2"
 OUTPUT="$3"
@@ -24,7 +24,7 @@ TYPE=quickboot
 function usage()
 {
 	echo "Usage:"
-	echo "$0 image_name source_image output_image [load_addr] [exec_addr]"
+	echo "$0 image_name source_image output_image arch [load_addr] [exec_addr] [type]"
 }
 
 #NAME=uboot

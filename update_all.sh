@@ -98,10 +98,10 @@ else
 	if [ "$CHIP" = "I143" ]; then
 		if [ "$ARCH" = "riscv" ]; then
 			riscv64-sifive-linux-gnu-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
-			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0xA0200000 0xA0200000 kernel	#for xboot--kernel
+			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0xA0200000 0xA0200000 kernel        #for xboot--kernel
 		else
 			armv5-glibc-linux-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
-			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x20208000 0x20208000 kernel	#for xboot--kernel
+			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x20208000 0x20208000 kernel        #for xboot--kernel
 		fi
 	else
 		if [ "$CHIP" = "Q628" ]; then
@@ -109,7 +109,7 @@ else
 			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x308000 0x308000 kernel
 		elif [ "$CHIP" = "Q645" ]; then
 			aarch64-none-linux-gnu-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
-			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x480000 0x480000
+			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x480000 0x480000 kernel
 		fi
 	fi
 fi
@@ -146,9 +146,9 @@ if [ "$CHIP" = "I143" ]; then
 		rm -f bin/$OPENSBI_KERNEL
 		./update_me.sh ../boot/xboot/bin/$OPENSBI_KERNEL && warn_up_ok $OPENSBI_KERNEL
 		if [ "$ARCH" = "riscv" ]; then
-			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0xA0200000 0xA0200000 	#for xboot--kernel
+			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0xA0200000 0xA0200000       #for xboot--kernel
 		else
-			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x20208000 0x20208000 	#for xboot--kernel
+			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x20208000 0x20208000       #for xboot--kernel
 		fi
 		echo "####use opensbi_kernel file replace uboot"
 		UBOOT=$OPENSBI_KERNEL
@@ -176,9 +176,9 @@ fi
 if [ "$BOOT_KERNEL_FROM_TFTP" != "1" ]; then
 	if [ "$CHIP" = "I143" ]; then
 		if [ "$ARCH" = "riscv" ]; then
-			dd if=bin/$FREEROTS.img   of=bin/$IMG_OUT conv=notrunc bs=1k seek=1536 #1.5M
+			dd if=bin/$FREEROTS.img of=bin/$IMG_OUT conv=notrunc bs=1k seek=1536 #1.5M
 		fi
-		dd if=bin/$LINUX       of=bin/$IMG_OUT conv=notrunc bs=1M seek=6
+		dd if=bin/$LINUX of=bin/$IMG_OUT conv=notrunc bs=1M seek=6
 
 		ls -lh bin/$IMG_OUT
 
@@ -190,15 +190,15 @@ if [ "$BOOT_KERNEL_FROM_TFTP" != "1" ]; then
 	else
 		if [ -f bin/$NONOS ]; then
 			if [ "$CHIP" = "Q645" ]; then
-				dd if=bin/$NONOS       of=bin/$IMG_OUT conv=notrunc bs=1k seek=1152
+				dd if=bin/$NONOS of=bin/$IMG_OUT conv=notrunc bs=1k seek=1152
 			else
-				dd if=bin/$NONOS       of=bin/$IMG_OUT conv=notrunc bs=1k seek=1024
+				dd if=bin/$NONOS of=bin/$IMG_OUT conv=notrunc bs=1k seek=1024
 			fi
 		fi
 		if [ "$CHIP" = "Q645" ]; then
-			dd if=bin/$LINUX       of=bin/$IMG_OUT conv=notrunc bs=1k seek=2176
+			dd if=bin/$LINUX of=bin/$IMG_OUT conv=notrunc bs=1k seek=2176
 		else
-			dd if=bin/$LINUX       of=bin/$IMG_OUT conv=notrunc bs=1k seek=2048
+			dd if=bin/$LINUX of=bin/$IMG_OUT conv=notrunc bs=1k seek=2048
 		fi
 
 		if [ "$NOR_JFFS2" == "1" ]; then
@@ -217,7 +217,7 @@ if [ "$BOOT_KERNEL_FROM_TFTP" != "1" ]; then
 			# Calculate offset of rootfs.
 			rootfs_offset=$((kernel_sz_1k+2048))
 
-			dd if=bin/$ROOTFS       of=bin/$IMG_OUT conv=notrunc bs=1k seek=$rootfs_offset
+			dd if=bin/$ROOTFS of=bin/$IMG_OUT conv=notrunc bs=1k seek=$rootfs_offset
 
 			ls -l bin/$IMG_OUT
 		else
@@ -244,17 +244,17 @@ if [ "$ZEBU_RUN" = "1" ]; then
 		echo -e "* Gen ZMEM : $ZMEM_HEX ... (${CYAN}FAKE DRAM${NC})"
 	fi
 	rm -f $ZMEM_HEX
-	#        in               out           in_skip     DRAM_off
+	#        in               out           in_skip   DRAM_off
 	if [ "$CHIP" == "Q645" ]; then
 	rm -f ./bin/zmem2.hex
-	DXTOR=1	#Q645 use real dram. DXTOR=1
+	DXTOR=1 #Q645 use real dram. DXTOR=1
 	B2ZMEM=./tools/bin2zmem/bin2zmem_q645
 	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
 	$B2ZMEM  bin/$BL31        $ZMEM_HEX     0x0       $((0x0200000 - 0x40)) $DXTOR # 2MB - 64
 	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) $DXTOR # 3MB - 64 (uboot before relocation)
 	$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x0400000 - 0x40)) $DXTOR # 4MB - 64
-	$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0480000 - 0x40)) $DXTOR # 3MB + 32KB - 64
-	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       $((0x3f00000 - 0x40)) $DXTOR # 64MB  (uboot after relocation)
+	$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0480000 - 0x40)) $DXTOR # 4MB + 512KB - 64
+	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       $((0x3f00000 - 0x40)) $DXTOR # 63MB - 64 (uboot after relocation)
 	elif [ "$CHIP" == "Q628" ]; then
 	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
 	$B2ZMEM  bin/$NONOS       $ZMEM_HEX     0x0       0x0010000             $DXTOR # 64KB
@@ -264,16 +264,16 @@ if [ "$ZEBU_RUN" = "1" ]; then
 	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x1F00000             $DXTOR # 31MB (uboot after relocation)
 	elif [ "$CHIP" == "I143" ]; then
 	#RISCV zmem Memory:{freertos|xboot|uboot|opensbi|dtb|kernel}
-	$B2ZMEM  bin/$FREEROTS.img  $ZMEM_HEX     0x0       0x00000000 	       		$DXTOR # 0
-	$B2ZMEM  bin/$XBOOT       	$ZMEM_HEX     0x0       0x000F0000            	$DXTOR # 4KB
-	$B2ZMEM  bin/$UBOOT       	$ZMEM_HEX     0x0       $((0x0100000 - 0x40)) 	$DXTOR # 1MB - 64 (OpenSBI start 0x1D0000)
-#	$B2ZMEM  bin/dtb.img     	$ZMEM_HEX     0x0       $((0x01F0000 - 0x40)) 			$DXTOR # 1M + 960KB
+	$B2ZMEM  bin/$FREEROTS.img      $ZMEM_HEX     0x0       0x00000000              $DXTOR # 0
+	$B2ZMEM  bin/$XBOOT             $ZMEM_HEX     0x0       0x000F0000              $DXTOR # 960KB
+	$B2ZMEM  bin/$UBOOT             $ZMEM_HEX     0x0       $((0x0100000 - 0x40))   $DXTOR # 1MB - 64 (OpenSBI start 0x1D0000)
+#	$B2ZMEM  bin/dtb.img            $ZMEM_HEX     0x0       $((0x01F0000 - 0x40))   $DXTOR # 1M + 960KB - 64
 	if [ "$ARCH" = "riscv" ]; then
-		$B2ZMEM  bin/$LINUX      	$ZMEM_HEX     0x0       $((0x0200000 - 0x40)) 	$DXTOR # 2MB - 64
+		$B2ZMEM  bin/$LINUX     $ZMEM_HEX     0x0       $((0x0200000 - 0x40))   $DXTOR # 2MB - 64
 	else
-		$B2ZMEM  bin/$LINUX      	$ZMEM_HEX     0x0       $((0x0208000 - 0x40)) 	$DXTOR # 2MB - 64
+		$B2ZMEM  bin/$LINUX     $ZMEM_HEX     0x0       $((0x0208000 - 0x40))   $DXTOR # 2MB + 32KB - 64
 	fi
-	#$B2ZMEM  bin/initramfs.img	$ZMEM_HEX     0x0		$((0x02000000 - 0x40))	$DXTOR
+	#$B2ZMEM  bin/initramfs.img     $ZMEM_HEX     0x0       $((0x02000000 - 0x40))  $DXTOR # 32MB - 64
 	fi
 	ls -lh $ZMEM_HEX
 	# check linux image size

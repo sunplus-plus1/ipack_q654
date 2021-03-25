@@ -51,7 +51,6 @@ UBOOT=u-boot.img
 NONOS=rom.img
 ROOTFS=rootfs.img
 BL31=bl31.img
-
 if [ "$CHIP" = "Q645" ]; then
 LINUX=Image.gz
 kernel_max_size=$((0xde0000))
@@ -252,9 +251,10 @@ if [ "$ZEBU_RUN" = "1" ]; then
 	B2ZMEM=./tools/bin2zmem/bin2zmem_q645
 	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
 	$B2ZMEM  bin/$BL31        $ZMEM_HEX     0x0       $((0x0200000 - 0x40)) $DXTOR # 2MB - 64
-	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) $DXTOR # 3MB - 64
+	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) $DXTOR # 3MB - 64 (uboot before relocation)
 	$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x0400000 - 0x40)) $DXTOR # 4MB - 64
 	$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0480000 - 0x40)) $DXTOR # 3MB + 32KB - 64
+	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       $((0x3f00000 - 0x40)) $DXTOR # 64MB  (uboot after relocation)
 	elif [ "$CHIP" == "Q628" ]; then
 	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
 	$B2ZMEM  bin/$NONOS       $ZMEM_HEX     0x0       0x0010000             $DXTOR # 64KB

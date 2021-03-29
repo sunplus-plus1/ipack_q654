@@ -50,12 +50,12 @@ XBOOT=xboot.img
 UBOOT=u-boot.img
 NONOS=rom.img
 ROOTFS=rootfs.img
+LINUX=uImage
 BL31=bl31.img
 if [ "$CHIP" = "Q645" ]; then
-LINUX=Image.gz
 kernel_max_size=$((0xde0000))
 else
-LINUX=uImage
+
 kernel_max_size=$((0xe00000))
 fi
 

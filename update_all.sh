@@ -55,7 +55,6 @@ BL31=bl31.img
 if [ "$CHIP" = "Q645" ]; then
 kernel_max_size=$((0xde0000))
 else
-
 kernel_max_size=$((0xe00000))
 fi
 
@@ -255,6 +254,7 @@ if [ "$ZEBU_RUN" = "1" ]; then
 	$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x0400000 - 0x40)) $DXTOR # 4MB - 64
 	$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0480000 - 0x40)) $DXTOR # 4MB + 512KB - 64
 	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       $((0x3f00000 - 0x40)) $DXTOR # 63MB - 64 (uboot after relocation)
+	zmem_kernel_max_size=$((0x3a80000))
 	elif [ "$CHIP" == "Q628" ]; then
 	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
 	$B2ZMEM  bin/$NONOS       $ZMEM_HEX     0x0       0x0010000             $DXTOR # 64KB
@@ -262,6 +262,7 @@ if [ "$ZEBU_RUN" = "1" ]; then
 	$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) $DXTOR # 3MB - 64
 	$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0308000 - 0x40)) $DXTOR # 3MB + 32KB - 64
 	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x1F00000             $DXTOR # 31MB (uboot after relocation)
+	zmem_kernel_max_size=$((0x1bf8000))
 	elif [ "$CHIP" == "I143" ]; then
 	#RISCV zmem Memory:{freertos|xboot|uboot|opensbi|dtb|kernel}
 	$B2ZMEM  bin/$FREEROTS.img      $ZMEM_HEX     0x0       0x00000000              $DXTOR # 0
@@ -273,11 +274,11 @@ if [ "$ZEBU_RUN" = "1" ]; then
 	else
 		$B2ZMEM  bin/$LINUX     $ZMEM_HEX     0x0       $((0x0208000 - 0x40))   $DXTOR # 2MB + 32KB - 64
 	fi
-	#$B2ZMEM  bin/initramfs.img     $ZMEM_HEX     0x0       $((0x02000000 - 0x40))  $DXTOR # 32MB - 64
+	zmem_kernel_max_size=$((0x1df8000))
 	fi
 	ls -lh $ZMEM_HEX
 	# check linux image size
-	if [[ $kernel_sz -gt $((0x1F00000)) ]]; then
+	if [[ $kernel_sz -gt ${zmem_kernel_max_size} ]]; then
 		echo -e "${YELLOW}Error: $LINUX size ($kernel_sz) is too big in ZMEM arrangement!${NC}"
 		exit 1
 	fi

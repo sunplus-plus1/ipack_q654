@@ -61,7 +61,7 @@ fi
 if [ "$ZEBU_RUN" = "1" ];then
 VMLINUX=vmlinux   # Use uncompressed uImage (qkboot + uncompressed vmlinux)
 else
-VMLINUX=            # Use compressed uImage
+VMLINUX=          # Use compressed uImage
 fi
 DTB=dtb
 FREEROTS=freertos
@@ -133,7 +133,7 @@ if [ "$ARCH" = "riscv" ]; then
 fi
 
 if [ "$CHIP" = "Q645" ]; then
-./update_me.sh ../boot/trusted-firmware-a/build/$BL31  && warn_up_ok $BL31
+	./update_me.sh ../boot/trusted-firmware-a/build/$BL31  && warn_up_ok $BL31
 fi
 
 echo "* Check image..."

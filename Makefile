@@ -102,7 +102,7 @@ emmc_hex: all
 	fi;
 	@dd if=$(BIN)/dtb.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x2022) >/dev/null 2>&1
 	@dd if=$(BIN)/uImage of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x2222) >/dev/null 2>&1
-	@dd if=$(BIN)/rootfs.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x12222) >/dev/null 2>&1
+	@dd if=../linux/rootfs/rootfs.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x12222) >/dev/null 2>&1
 	@hexdump -v -e '1/1 "%02x\n"' $(BIN)/emmc_user0.bin > $(BIN)/$(EMMC_USER)
 	@ls -l $(BIN)/$(EMMC_USER)
 

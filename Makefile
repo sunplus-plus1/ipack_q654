@@ -50,6 +50,11 @@ isp: all
 	fi;
 ###############################
 
+nor_hex:
+	@if [ ! -f $(BIN)/$(SPI_ALL) ]; then echo "No input : $(BIN)/$(SPI_ALL)" ; exit 1 ; fi
+	@echo "* Gen NOR Hex : $(CHIP)_run.hex"
+	@./tools/gen_hex.sh $(BIN)/$(SPI_ALL) $(BIN)/$(CHIP)_run.hex ;
+
 # To create isp disk hex for zebu
 # 1. make isp --> gen ispbooot.BIN
 # 2. Read disk/sample_note.txt to learn how to create disk/sd64m.bin
@@ -96,11 +101,7 @@ emmc_hex: all
 		dd if=$(BIN)/freertos.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x1822) >/dev/null 2>&1 ; \
 	fi;
 	@dd if=$(BIN)/dtb.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x2022) >/dev/null 2>&1
-	@if [ "$(CHIP)" = "Q645" ]; then \
-		dd if=$(BIN)/Image.gz of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x2222) >/dev/null 2>&1 ; \
-	else \
-		dd if=$(BIN)/uImage of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x2222) >/dev/null 2>&1 ; \
-	fi;
+	@dd if=$(BIN)/uImage of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x2222) >/dev/null 2>&1
 	@dd if=$(BIN)/rootfs.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x12222) >/dev/null 2>&1
 	@hexdump -v -e '1/1 "%02x\n"' $(BIN)/emmc_user0.bin > $(BIN)/$(EMMC_USER)
 	@ls -l $(BIN)/$(EMMC_USER)

@@ -25,11 +25,6 @@ config:
 $(SPI_ALL):
 	make config
 	DXTOR=0 bash ./update_all.sh $(SPI_ALL) $(ZEBU_RUN) $(BOOT_KERNEL_FROM_TFTP) $(CHIP) $(ARCH) $(NOR_JFFS2)
-	@if [ "$(ZEBU_RUN)" = '1' ]; then  \
-		echo ""; \
-		echo "* Gen NOR Hex : $(CHIP)_run.hex" ;\
-		./tools/gen_hex.sh $(BIN)/$(SPI_ALL) $(BIN)/$(CHIP)_run.hex ;\
-	fi
 	@if [ "$(BOOT_KERNEL_FROM_TFTP)" = '1' ]; then \
 		if [ "$(CHIP)" = "I143" ]; then  \
 			./copy2tftp_riscv.sh $(TFTP_SERVER_PATH);\
@@ -48,13 +43,15 @@ isp: all
 	else \
 		dd if=bin/u-boot.img of=$(BIN)/$(ISP_IMG) conv=notrunc bs=1k seek=64 ; \
 	fi;
-###############################
 
+###############################
+# Pack for SPI-NOR boot testing
 nor_hex:
 	@if [ ! -f $(BIN)/$(SPI_ALL) ]; then echo "No input : $(BIN)/$(SPI_ALL)" ; exit 1 ; fi
 	@echo "* Gen NOR Hex : $(CHIP)_run.hex"
 	@./tools/gen_hex.sh $(BIN)/$(SPI_ALL) $(BIN)/$(CHIP)_run.hex ;
 
+###############################
 # To create isp disk hex for zebu
 # 1. make isp --> gen ispbooot.BIN
 # 2. Read disk/sample_note.txt to learn how to create disk/sd64m.bin
@@ -67,6 +64,8 @@ sd_hex:
 	@hexdump -v -e '1/1 "%02x\n"' $(DISK_IN) > $(DISK_OUT)
 	@ls -l $(DISK_OUT)
 
+###############################
+# Pack for SPI-NAND boot testing
 NAND_RAW=nand/nand32mb.raw
 NAND_ZEBU_BIN=nand/nand32mb.raw.zebu
 NAND_ZEBU_HEX=nand/nand.hex

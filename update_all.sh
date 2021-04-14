@@ -154,82 +154,82 @@ if [ "$CHIP" = "I143" ]; then
 	fi
 fi
 
-echo ""
-echo "* Gen NOR image: $IMG_OUT ..."
-if [ -f bin/$BOOTROM ]; then
-	dd if=bin/$BOOTROM     of=bin/$IMG_OUT
-else
-	rm -f bin/$IMG_OUT
-fi
-
-if [ "$CHIP" = "Q645" ]; then
-	dd if=bin/$XBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=96
-	dd if=bin/dtb.img      of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
-	dd if=bin/$UBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=384
-else
-	dd if=bin/$XBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=64
-	dd if=bin/dtb.img      of=bin/$IMG_OUT conv=notrunc bs=1k seek=128
-	dd if=bin/$UBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
-fi
-
-if [ "$BOOT_KERNEL_FROM_TFTP" != "1" ]; then
-	if [ "$CHIP" = "I143" ]; then
-		if [ "$ARCH" = "riscv" ]; then
-			dd if=bin/$FREEROTS.img of=bin/$IMG_OUT conv=notrunc bs=1k seek=1536 #1.5M
-		fi
-		dd if=bin/$LINUX of=bin/$IMG_OUT conv=notrunc bs=1M seek=6
-
-		ls -lh bin/$IMG_OUT
-
-		# check linux image size
-		kernel_sz=`du -sb bin/$LINUX | cut -f1`
-		if [ $kernel_sz -gt $((0xA00000)) ]; then
-			echo -e "${YELLOW}Warning: $LINUX size ($kernel_sz) is big. Need bigger SPI_NOR flash (>16MB)!${NC}"
-		fi
+if [ "$ZEBU_RUN" = "0" ]; then
+	echo ""
+	echo "* Gen NOR image: $IMG_OUT ..."
+	if [ -f bin/$BOOTROM ]; then
+		dd if=bin/$BOOTROM     of=bin/$IMG_OUT
 	else
-		if [ -f bin/$NONOS ]; then
+		rm -f bin/$IMG_OUT
+	fi
+
+	if [ "$CHIP" = "Q645" ]; then
+		dd if=bin/$XBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=96
+		dd if=bin/dtb.img      of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
+		dd if=bin/$UBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=384
+	else
+		dd if=bin/$XBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=64
+		dd if=bin/dtb.img      of=bin/$IMG_OUT conv=notrunc bs=1k seek=128
+		dd if=bin/$UBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
+	fi
+
+	if [ "$BOOT_KERNEL_FROM_TFTP" != "1" ]; then
+		if [ "$CHIP" = "I143" ]; then
+			if [ "$ARCH" = "riscv" ]; then
+				dd if=bin/$FREEROTS.img of=bin/$IMG_OUT conv=notrunc bs=1k seek=1536 #1.5M
+			fi
+			dd if=bin/$LINUX of=bin/$IMG_OUT conv=notrunc bs=1M seek=6
+
+			ls -lh bin/$IMG_OUT
+
+			# check linux image size
+			kernel_sz=`du -sb bin/$LINUX | cut -f1`
+			if [ $kernel_sz -gt $((0xA00000)) ]; then
+				echo -e "${YELLOW}Warning: $LINUX size ($kernel_sz) is big. Need bigger SPI_NOR flash (>16MB)!${NC}"
+			fi
+		else
+			if [ -f bin/$NONOS ]; then
+				if [ "$CHIP" = "Q645" ]; then
+					dd if=bin/$NONOS of=bin/$IMG_OUT conv=notrunc bs=1k seek=1152
+				else
+					dd if=bin/$NONOS of=bin/$IMG_OUT conv=notrunc bs=1k seek=1024
+				fi
+			fi
 			if [ "$CHIP" = "Q645" ]; then
-				dd if=bin/$NONOS of=bin/$IMG_OUT conv=notrunc bs=1k seek=1152
+				dd if=bin/$LINUX of=bin/$IMG_OUT conv=notrunc bs=1k seek=2176
 			else
-				dd if=bin/$NONOS of=bin/$IMG_OUT conv=notrunc bs=1k seek=1024
-			fi
-		fi
-		if [ "$CHIP" = "Q645" ]; then
-			dd if=bin/$LINUX of=bin/$IMG_OUT conv=notrunc bs=1k seek=2176
-		else
-			dd if=bin/$LINUX of=bin/$IMG_OUT conv=notrunc bs=1k seek=2048
-		fi
-
-		if [ "$NOR_JFFS2" == "1" ]; then
-			# Generate jffs2 rootfs for SPI-NOR
-			bash ./gen_nor_jffs2.sh
-			if [ $? -ne 0 ]; then
-				exit 1;
+				dd if=bin/$LINUX of=bin/$IMG_OUT conv=notrunc bs=1k seek=2048
 			fi
 
-			# Get size of Linux image (in unit of byte).
-			kernel_sz=`du -sb bin/$LINUX | cut -f1`
+			if [ "$NOR_JFFS2" == "1" ]; then
+				# Generate jffs2 rootfs for SPI-NOR
+				bash ./gen_nor_jffs2.sh
+				if [ $? -ne 0 ]; then
+					exit 1;
+				fi
 
-			# Align size of Linux image to 64 boundary (in unit of 1 kbytes)
-			kernel_sz_1k=$((((kernel_sz+65535)/65536)*64))
+				# Get size of Linux image (in unit of byte).
+				kernel_sz=`du -sb bin/$LINUX | cut -f1`
 
-			# Calculate offset of rootfs.
-			rootfs_offset=$((kernel_sz_1k+2048))
+				# Align size of Linux image to 64 boundary (in unit of 1 kbytes)
+				kernel_sz_1k=$((((kernel_sz+65535)/65536)*64))
 
-			dd if=bin/$ROOTFS of=bin/$IMG_OUT conv=notrunc bs=1k seek=$rootfs_offset
+				# Calculate offset of rootfs.
+				rootfs_offset=$((kernel_sz_1k+2048))
 
-			ls -l bin/$IMG_OUT
-		else
-			# Check linux image size
-			kernel_sz=`du -sb bin/$LINUX | cut -f1`
-			if [[ $kernel_sz -gt $kernel_max_size ]]; then
-				echo -e "${YELLOW}Warning: $LINUX size ($kernel_sz) is too big. Need bigger SPI_NOR flash (>16MB)!${NC}"
+				dd if=bin/$ROOTFS of=bin/$IMG_OUT conv=notrunc bs=1k seek=$rootfs_offset
+
+				ls -l bin/$IMG_OUT
+			else
+				# Check linux image size
+				kernel_sz=`du -sb bin/$LINUX | cut -f1`
+				if [[ $kernel_sz -gt $kernel_max_size ]]; then
+					echo -e "${YELLOW}Warning: $LINUX size ($kernel_sz) is too big. Need bigger SPI_NOR flash (>16MB)!${NC}"
+				fi
 			fi
 		fi
 	fi
-fi
-
-if [ "$ZEBU_RUN" = "1" ]; then
+else
 	B2ZMEM=./tools/bin2zmem/bin2zmem
 	ZMEM_HEX=./bin/zmem.hex
 	make -C ./tools/bin2zmem

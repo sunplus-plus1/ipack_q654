@@ -1,4 +1,4 @@
-IN=emmc_gpt_32M.bin
+IN=emmc_gpt.bin
 
 i=0 
 while [ $i -lt 5 ];

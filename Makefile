@@ -82,10 +82,10 @@ nand_hex:
 
 ###############################
 # Pack for emmc boot testing
-emmc_hex: all
+emmc_hex:
 	@echo ""
 	@echo "* Gen eMMC boot1 hex: $(EMMC_BOOT1)"
-	@hexdump -v -e '1/1 "%02x\n"' $(BIN)/xboot.img > $(BIN)/$(EMMC_BOOT1)
+	@hexdump -v -e '1/1 "%02x\n"' ../out/xboot.img > $(BIN)/$(EMMC_BOOT1)
 	@ls -l $(BIN)/$(EMMC_BOOT1)
 	@echo ""
 	@echo "* Gen eMMC user hex: $(EMMC_USER)"
@@ -94,14 +94,14 @@ emmc_hex: all
 	@dd if=emmc_gpt/lba2.bin of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=2 >/dev/null 2>&1
 	@dd if=emmc_gpt/lba3.bin of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=3 >/dev/null 2>&1
 	@dd if=emmc_gpt/lba4.bin of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=4 >/dev/null 2>&1
-	@dd if=$(BIN)/u-boot.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x22) >/dev/null 2>&1
-	@dd if=$(BIN)/u-boot.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x822) >/dev/null 2>&1
+	@dd if=../out/u-boot.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x22) >/dev/null 2>&1
+	@dd if=../out/u-boot.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x822) >/dev/null 2>&1
 	@if [ "$(CHIP)" = "I143" ]; then \
-		dd if=$(BIN)/freertos.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x1822) >/dev/null 2>&1 ; \
+		dd if=../out/freertos.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x1822) >/dev/null 2>&1 ; \
 	fi;
-	@dd if=$(BIN)/dtb.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x2022) >/dev/null 2>&1
-	@dd if=$(BIN)/uImage of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x2222) >/dev/null 2>&1
-	@dd if=../linux/rootfs/rootfs.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x12222) >/dev/null 2>&1
+	@dd if=../out/dtb of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x2022) >/dev/null 2>&1
+	@dd if=../out/uImage of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x2222) >/dev/null 2>&1
+	@dd if=../out/rootfs.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x12222) >/dev/null 2>&1
 	@hexdump -v -e '1/1 "%02x\n"' $(BIN)/emmc_user0.bin > $(BIN)/$(EMMC_USER)
 	@ls -l $(BIN)/$(EMMC_USER)
 

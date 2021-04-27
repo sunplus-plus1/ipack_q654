@@ -203,7 +203,7 @@ if [ "$ZEBU_RUN" = "0" ]; then
 
 			if [ "$NOR_JFFS2" == "1" ]; then
 				# Generate jffs2 rootfs for SPI-NOR
-				bash ./gen_nor_jffs2.sh
+				bash ./gen_nor_jffs2.sh $CHIP
 				if [ $? -ne 0 ]; then
 					exit 1;
 				fi
@@ -215,7 +215,11 @@ if [ "$ZEBU_RUN" = "0" ]; then
 				kernel_sz_1k=$((((kernel_sz+65535)/65536)*64))
 
 				# Calculate offset of rootfs.
-				rootfs_offset=$((kernel_sz_1k+2048))
+				if [ "$CHIP" = "Q645" ]; then
+					rootfs_offset=$((kernel_sz_1k+2048+128))
+				else
+					rootfs_offset=$((kernel_sz_1k+2048))
+				fi
 
 				dd if=bin/$ROOTFS of=bin/$IMG_OUT conv=notrunc bs=1k seek=$rootfs_offset
 

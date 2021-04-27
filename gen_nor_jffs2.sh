@@ -16,7 +16,11 @@ kernel_sz=`du -sb bin/$LINUX | cut -f1`
 kernel_sz_1k=$((((kernel_sz+65535)/65536)*64))
 
 # Calculate offset of rootfs.
-rootfs_offset=$((kernel_sz_1k+2048))
+if [ "$1" = "Q645" ]; then
+	rootfs_offset=$((kernel_sz_1k+2048+128))
+else
+	rootfs_offset=$((kernel_sz_1k+2048))
+fi
 
 # Calculate size of rootfs
 rootfs_sz=$((SPI_NOR_SIZE*1024*1024-rootfs_offset*1024))

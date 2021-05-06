@@ -1,4 +1,5 @@
 #./update_me.sh <source_img>
+source ../.config
 
 export PATH="../crossgcc/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu/bin/:$PATH"
 export PATH="../crossgcc/armv5-eabi--glibc--stable/bin/:$PATH"
@@ -108,6 +109,13 @@ else
 			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x308000 0x308000 kernel
 		elif [ "$CHIP" = "Q645" ]; then
 			aarch64-none-linux-gnu-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
+			if [ "$SECURE" = "1" ]; then
+				cd ../build/tools/secure_hsm/secure
+				./clr_out.sh
+				./build_inputfile_sb.sh ../../../../ipack/bin/$VMLINUX.bin 1
+				cp -f out/outfile_sb.bin ../../../../ipack/bin/$VMLINUX.bin
+				cd ../../../../ipack
+			fi
 			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x480000 0x480000 kernel
 		fi
 	fi

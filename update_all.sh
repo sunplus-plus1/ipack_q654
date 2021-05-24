@@ -290,8 +290,10 @@ else
 	fi
 	ls -lh $ZMEM_HEX
 	# check linux image size
+	kernel_sz=`du -sb bin/$LINUX | cut -f1`
 	if [[ $kernel_sz -gt ${zmem_kernel_max_size} ]]; then
 		echo -e "${YELLOW}Error: $LINUX size ($kernel_sz) is too big in ZMEM arrangement!${NC}"
 		exit 1
 	fi
+	echo -e "# check linux image size ok"
 fi

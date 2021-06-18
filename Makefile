@@ -24,7 +24,7 @@ config:
 
 $(SPI_ALL):
 	make config
-	DXTOR=0 bash ./update_all.sh $(SPI_ALL) $(ZEBU_RUN) $(BOOT_KERNEL_FROM_TFTP) $(CHIP) $(ARCH) $(NOR_JFFS2)
+	DXTOR=0 fakeroot ./update_all.sh $(SPI_ALL) $(ZEBU_RUN) $(BOOT_KERNEL_FROM_TFTP) $(CHIP) $(ARCH) $(NOR_JFFS2)
 	@if [ "$(BOOT_KERNEL_FROM_TFTP)" = '1' ]; then \
 		if [ "$(CHIP)" = "I143" ]; then  \
 			./copy2tftp_riscv.sh $(TFTP_SERVER_PATH);\

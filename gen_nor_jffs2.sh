@@ -7,7 +7,7 @@ SPI_NOR_SIZE=16
 LINUX=uImage
 ROOTFS_IMG=bin/rootfs.img
 ROOTFS_DIR=../linux/rootfs/initramfs/disk
-JFFS2=../linux/rootfs/tools/mkfs.jffs2
+JFFS2="mkfs.jffs2"
 
 # Get size of Linux image (in unit of byte).
 kernel_sz=`du -sb bin/$LINUX | cut -f1`

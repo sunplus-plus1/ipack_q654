@@ -257,9 +257,18 @@ else
 	rm -f $ZMEM_HEX
 	#        in               out           in_skip   DRAM_off
 	if [ "$CHIP" == "Q645" ]; then
-	rm -f ./bin/zmem2.hex
-	DXTOR=1 #Q645 use real dram. DXTOR=1
-	B2ZMEM=./tools/bin2zmem/bin2zmem_q645
+	# Gen Q645_run.hex for xboot.img
+	if [ -f bin/$BOOTROM ]; then
+		dd if=bin/$BOOTROM     of=bin/$IMG_OUT
+	else
+		rm -f bin/$IMG_OUT
+	fi
+	dd if=bin/$XBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=96
+	./tools/gen_hex.sh bin/$IMG_OUT bin/Q645_run.hex
+	# Gen zmem*.hex
+	rm -f ./bin/zmem*.hex
+	ZMEM_HEX=./bin/zmem0a.hex
+	B2ZMEM=./tools/bin2zmem/bin2zmem_ddr4.sh
 	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
 	$B2ZMEM  bin/$BL31        $ZMEM_HEX     0x0       $((0x0200000 - 0x40)) $DXTOR # 2MB - 64
 	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) $DXTOR # 3MB - 64 (uboot before relocation)

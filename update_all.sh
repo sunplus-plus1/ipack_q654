@@ -268,8 +268,10 @@ else
 	# Gen zmem*.hex
 	rm -f ./bin/zmem*.hex
 	ZMEM_HEX=./bin/zmem0a.hex
-	B2ZMEM=./tools/bin2zmem/bin2zmem_ddr4.sh
+	#B2ZMEM=./tools/bin2zmem/bin2zmem_ddr4.sh
+	B2ZMEM=./tools/bin2zmem/bin2zmem_q645
 	M4=../freertos/q645/build/m4.bin
+	DXTOR=1
 	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
 	$B2ZMEM  bin/$BL31        $ZMEM_HEX     0x0       $((0x0200000 - 0x40)) $DXTOR # 2MB - 64
 	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) $DXTOR # 3MB - 64 (uboot before relocation)

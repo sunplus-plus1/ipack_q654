@@ -37,96 +37,151 @@ static void usage(void)
 //#define ZENDIAN       htonl
 #define ZENDIAN       /* x86 is little endian */
 
-/*
- * @cpu_view : cpu view address in byte
- *
- * Return dram xtor view in zword (ZMEM_DRAM_XTOR_ZW_LEN)
- */
-static unsigned int cpu2dxtor_view(unsigned int cpu_view)
-{
-	unsigned int dram_view, ba, other_addr;
+#define ZMEM0B_HEX		"./bin/zmem0b.hex"
+#define ZMEM1A_HEX		"./bin/zmem1a.hex"
+#define ZMEM1B_HEX		"./bin/zmem1b.hex"
 
-	// Q642 zebu_sim_DRAM (16bits x2 ) , total 1 Gbytes
-	/*
-	 * dram view   = (        BA,     ROW,                  COL)
-	 * = address_cpu ( [12,11,6],  [29:15],  [14:13, 10:7, 5:2])
-	 * Offset      @ (        25,       10,       8,    4,   0 )
-	 * bits                    3        15                   10  = 28 bits ,  in 4-byte (2 bits) units
-	 *
-	 * RD information :
-	 *  BA2 = BUS_ADR[12], BA1 = BUS_ADR[11], BA0 = BUS_ADR[6]
-	 *  other_addr = { BUS_ADR[29:13], BUS_ADR[10:7], BUS_ADR[5:0] }; // [26:0]
-	 *  total_col_adr = other_addr >> 2                               // [24:0]
-	 *  Col_Addr = total_col_adr[9:0]
-	 *  Row_Addr = total_col_adr[24:10]                               // 15 bits
-	 *  DRAM_ADR = {{BA2,BA1,BA0}, Row_Addr[14:0], Col_Addr[9:0]}     // 28 bits
-	 *
-	 * Eg: cpu address 0x2000_D144
-	 * ->
-	 * dram view =
-	 * address_cpu ( ____ [12,11,6],                [29:15], [14:13, 10:7,  5:2])
-	 *               0000     10 1     1 0000 0000 0000 01       10  0010  0001
-	 * = 0b00_0621
-	 */
-	ba = (((cpu_view >> 11) & 3)    << 26) |
-		(((cpu_view >> 6) & 1)	<< 25);
+/**############### DDR4 controller ###################*/
 
-	other_addr =(cpu_view & 0x3f) |               // [5:0]
-		(((cpu_view >> 7) & 0xf) << 6)|       // [10:7]
-		(((cpu_view >> 13) & 0x7ffff) << 10); // [31:13]
+#define ADDRMAP0    0x00000008  
+#define ADDRMAP1    0x00000204 
+#define ADDRMAP2    0x02040000 
+#define ADDRMAP3    0x00050406 
+#define ADDRMAP4    0x00001f1f 
+#define ADDRMAP5    0x0a080309 
+#define ADDRMAP6    0x09080608
+#define ADDRMAP7    0x00000f07
+#define ADDRMAP8    0x00000000 
+#define ADDRMAP9    0x09090b0b 
+#define ADDRMAP10   0x0b0a0602
+#define ADDRMAP11   0x0000000a
 
-	dram_view = ba | (other_addr >> 2);
-
-	if (g_debug) {
-		static int init = 0;
-		if (init++ < 50) {
-			dbg("cpu view=0x%08x\n", cpu_view);
-			dbg("zw_off  =0x%08x\n", dram_view);
-		}
-	}
-
-	return dram_view;
-}
-
+unsigned int cs;
+/*  convert from python */
 static unsigned int cpu2dxtor_view_8x4(unsigned int cpu_view)
 {
 	unsigned int dram_view;
+	unsigned int cs0; 
+    unsigned int b2, b1, b0 ;   
+    unsigned int r17, r16, r15, r14, r13, r12, r11, r10, r9, r8, r7, r6, r5, r4, r3, r2, r1, r0 ;
+    unsigned int c11, c10, c9, c8, c7, c6, c5, c4, c3, c2, c1, c0;
+    unsigned int  bank, row, column;
 
-	// Q642 zebu_sim_DRAM_x8 ( 8bits x4 ) , total 2 Gbytes
-	/*
-	 * dram view   = (        BA,     ROW,                  COL)
-	 * = address_cpu ( [12:11,6],  [30:15],  [14:13, 10:7, 5:2])
-	 * Offset      @ (        26,       10,       8,    4,   0 )
-	 * bits                    3        16                   10       // 29 bits ,  in 4-byte units
-	 *
-	 * Eg: cpu address 0ff0_0040
-	 * dram view =
-	 * address_cpu ( ___ [12:11,6] ,               [30:15], [14:13, 10:7,  5:2])
-	 *               000    0 0 1    00 0111 1111 1000 00       00  0000  0000
-	 * = 047f_8000
-	 *
-	 * Eg: cpu address 0x4000_d144
-	 * ->
-	 * dram view =
-	 * address_cpu ( ___ [12:11,6] ,               [30:15], [14:13, 10:7,  5:2])
-	 *               000    1 0 1    10 0000 0000 0000 01       10  0010  0001
-	 * = 1600_0621
-	 */
-	dram_view =
-		(((cpu_view >> 11) &       3) << 27) |
-		(((cpu_view >>  6) &       1) << 26) |
-		(((cpu_view >> 13) & 0x3ffff) <<  8) |
-		(((cpu_view >>  7) &     0xf) <<  4) |
-		(((cpu_view >>  2) &     0xf) <<  0);
+	int map_dch_bit0             = (ADDRMAP0 >> 16)&0x1F;	//ADDRMAP0[16 : 20+1]
+	int map_cs_bit1              = (ADDRMAP0 >> 8)&0x1F;	//ADDRMAP0 [8  : 12+1] 
+	int map_cs_bit0              = (ADDRMAP0 >> 0)&0x1F;	//ADDRMAP0 [0  : 4+1] 
+	int map_bank_b2              = (ADDRMAP1 >> 16)&0x3F;	//ADDRMAP1 [16 : 21+1] 
+	int map_bank_b1              = (ADDRMAP1 >> 8)&0x3F;	//ADDRMAP1 [8  : 13+1] 
+	int map_bank_b0              = (ADDRMAP1 >> 0)&0x3F;	//ADDRMAP1 [0  : 5+1] 
+	int map_col_b5               = (ADDRMAP2 >> 24)&0xF;	//ADDRMAP2 [24 : 27+1] 
+	int map_col_b4               = (ADDRMAP2 >> 16)&0xF;	//ADDRMAP2 [16 : 19+1] 
+	int map_col_b3               = (ADDRMAP2 >> 8)&0x1F;	//ADDRMAP2 [8  : 12+1] 
+	int map_col_b2               = (ADDRMAP2 >> 0)&0xF;		//ADDRMAP2 [0  : 3+1] 
+	int map_col_b9               = (ADDRMAP3 >> 24)&0x1F;	//ADDRMAP3 [24 : 28+1] 
+	int map_col_b8               = (ADDRMAP3 >> 16)&0x1F;	//ADDRMAP3 [16 : 20+1] 
+	int map_col_b7               = (ADDRMAP3 >> 8)&0x1F;	//ADDRMAP3 [8  : 12+1] 
+	int map_col_b6               = (ADDRMAP3 >> 0)&0x1F;	//ADDRMAP3 [0  : 4+1] 
+	int map_col_addr_shift       = (ADDRMAP4 >> 31)&0x1;	//ADDRMAP4 [31 : ] 
+	int map_col_b11              = (ADDRMAP4 >> 8)&0x1F;	//ADDRMAP4 [8  : 12+1] 
+	int map_col_b10              = (ADDRMAP4 >> 0)&0x1F;	//ADDRMAP4 [0  : 4+1] 
+	int map_row_b11              = (ADDRMAP5 >> 24)&0xF;	//ADDRMAP5 [24 : 27+1] 
+	int map_row_b2_10            = (ADDRMAP5 >> 16)&0xF;	//ADDRMAP5 [16 : 19+1] 
+	int map_row_b1               = (ADDRMAP5 >> 8)&0xF;		//ADDRMAP5 [8  : 11+1] 
+	int map_row_b0               = (ADDRMAP5 >> 0)&0xF;		//ADDRMAP5 [0  : 3+1] 
+	int map_lpddr34_3gb_6gb_12gb = (ADDRMAP6 >> 29)&0x7;	//ADDRMAP6 [29 : 31+1] 
+	int map_row_b15              = (ADDRMAP6 >> 24)&0xF;	//ADDRMAP6 [24 : 27+1] 
+	int map_row_b14              = (ADDRMAP6 >> 16)&0xF;	//ADDRMAP6 [16 : 19+1] 
+	int map_row_b13              = (ADDRMAP6 >> 8)&0xF;		//ADDRMAP6 [8  : 11+1] 
+	int map_row_b12              = (ADDRMAP6 >> 0)&0xF;		//ADDRMAP6 [0  : 3+1] 
+	int map_row_b17              = (ADDRMAP7 >> 8)&0xF;		//ADDRMAP7 [8  : 11+1] 
+	int map_row_b16              = (ADDRMAP7 >> 0)&0xF;		//ADDRMAP7 [0  : 3+1] 
+	int map_bg_b1                = (ADDRMAP8 >> 8)&0x3F;	//ADDRMAP8 [8  : 13+1] 
+	int map_bg_b0                = (ADDRMAP8 >> 0)&0x3F;	//ADDRMAP8 [0  : 5+1] 
+	int map_row_b5               = (ADDRMAP9 >> 24)&0xF;	//ADDRMAP9 [24 : 27+1] 
+	int map_row_b4               = (ADDRMAP9 >> 16)&0xF;	//ADDRMAP9 [16 : 19+1] 
+	int map_row_b3               = (ADDRMAP9 >> 8)&0xF;		//ADDRMAP9 [8  : 11+1] 
+	int map_row_b2               = (ADDRMAP9 >> 0)&0xF;		//ADDRMAP9 [0  : 3+1] 
+	int map_row_b9               = (ADDRMAP10 >> 24)&0xF;	//ADDRMAP10[24 : 27+1] 
+	int map_row_b8               = (ADDRMAP10 >> 16)&0xF;	//ADDRMAP10[16 : 19+1] 
+	int map_row_b7               = (ADDRMAP10 >> 8)&0xF;	//ADDRMAP10[8  : 11+1] 
+	int map_row_b6               = (ADDRMAP10 >> 0)&0xF;	//ADDRMAP10[0  : 3+1]
+	int map_cid_b1               = (ADDRMAP11 >> 16)&0x1F;	//ADDRMAP11[16 : 20+1]  
+	int map_cid_b0               = (ADDRMAP11 >> 8)&0x1F;	//ADDRMAP11[8  : 12+1]  
+	int map_row_b10              = (ADDRMAP11 >> 0)&0xF;	//ADDRMAP11[0  : 3+1] 
 
-	if (g_debug) {
-		static int init = 0;
-		if (init++ < 50) {
-			dbg("cpu view=0x%08x\n", cpu_view);
-			dbg("zw_off  =0x%08x\n", dram_view);
-		}
-	}
+	unsigned long long HIF_ADDR = (cpu_view >> 6) << 4;
 
+	cs0   = (HIF_ADDR >> (6+map_cs_bit0))&0x01       ;// HIF_ADDR[6 +int(map_cs_bit0,2)]
+     
+    b2    = (HIF_ADDR >> (4+map_bank_b2))&0x01       ;// HIF_ADDR[4 +int(map_bank_b2,2)] 
+    b1    = (HIF_ADDR >> (3+map_bank_b1))&0x01       ;//  HIF_ADDR[3 +int(map_bank_b1,2)] 
+    b0    = (HIF_ADDR >> (2+map_bank_b0))&0x01       ;//  HIF_ADDR[2 +int(map_bank_b0,2)] 
+    
+    if (map_row_b17 == 0x0f)
+        r17   =  0; 
+    else
+        r17   = (HIF_ADDR >> (23+map_row_b17))&0x01       ;// HIF_ADDR[23+int(map_row_b17,2)] 
+    r16   =  (HIF_ADDR >> (22+map_row_b16))&0x01       ;//HIF_ADDR[22+int(map_row_b16,2)] 
+    r15   =  (HIF_ADDR >> (21+map_row_b15))&0x01       ;//HIF_ADDR[21+int(map_row_b15,2)] 
+
+    r14   =  (HIF_ADDR >> (20+map_row_b14))&0x01       ;//HIF_ADDR[20+int(map_row_b14,2)] 
+    r13   =  (HIF_ADDR >> (19+map_row_b13))&0x01       ;//HIF_ADDR[19+int(map_row_b13,2)] 
+    r12   =  (HIF_ADDR >> (18+map_row_b12))&0x01       ;//HIF_ADDR[18+int(map_row_b12,2)] 
+    r11   =  (HIF_ADDR >> (17+map_row_b11))&0x01       ;//HIF_ADDR[17+int(map_row_b11,2)] 
+
+    if (map_row_b2_10 == 0x0f)
+    {
+          r10   =  (HIF_ADDR >> (16+map_row_b10))&0x01       ;//HIF_ADDR[16+int(map_row_b10,2)] 
+          r9    =  (HIF_ADDR >> (15+map_row_b9))&0x01       ;//HIF_ADDR[15+int(map_row_b9 ,2)] 
+          r8    =  (HIF_ADDR >> (14+map_row_b8))&0x01       ;//HIF_ADDR[14+int(map_row_b8 ,2)] 
+          r7    =  (HIF_ADDR >> (13+map_row_b7))&0x01       ;//HIF_ADDR[13+int(map_row_b7 ,2)] 
+          r6    =  (HIF_ADDR >> (12+map_row_b6))&0x01       ;//HIF_ADDR[12+int(map_row_b6 ,2)] 
+          r5    =  (HIF_ADDR >> (11+map_row_b5))&0x01       ;// HIF_ADDR[11+int(map_row_b5 ,2)] 
+          r4    =  (HIF_ADDR >> (10+map_row_b4))&0x01       ;//HIF_ADDR[10+int(map_row_b4 ,2)] 
+          r3    =  (HIF_ADDR >> (9+map_row_b3))&0x01       ;//HIF_ADDR[9 +int(map_row_b3 ,2)] 
+          r2    =  (HIF_ADDR >> (8+map_row_b2))&0x01       ;//HIF_ADDR[8 +int(map_row_b2 ,2)]
+    } 
+    else
+    {
+          r10   =(HIF_ADDR >> (16+map_row_b2_10))&0x01       ;//  HIF_ADDR[16+int(map_row_b2_10,2)] 
+          r9    =(HIF_ADDR >> (15+map_row_b2_10))&0x01       ;//  HIF_ADDR[15+int(map_row_b2_10,2)] 
+          r8    =(HIF_ADDR >> (14+map_row_b2_10))&0x01       ;//  HIF_ADDR[14+int(map_row_b2_10,2)] 
+          r7    =(HIF_ADDR >> (13+map_row_b2_10))&0x01       ;//  HIF_ADDR[13+int(map_row_b2_10,2)] 
+          r6    =(HIF_ADDR >> (12+map_row_b2_10))&0x01       ;//  HIF_ADDR[12+int(map_row_b2_10,2)] 
+          r5    =(HIF_ADDR >> (11+map_row_b2_10))&0x01       ;//  HIF_ADDR[11+int(map_row_b2_10,2)] 
+          r4    =(HIF_ADDR >> (10+map_row_b2_10))&0x01       ;//  HIF_ADDR[10+int(map_row_b2_10,2)] 
+          r3    =(HIF_ADDR >> (9+map_row_b2_10))&0x01        ;//  HIF_ADDR[9 +int(map_row_b2_10,2)] 
+          r2    =(HIF_ADDR >> (8+map_row_b2_10))&0x01        ;//  HIF_ADDR[8 +int(map_row_b2_10,2)] 
+    }	
+    r1    =  (HIF_ADDR >> (7+map_row_b1))&0x01        ;//HIF_ADDR[7 +int(map_row_b1 ,2)] 
+    r0    =  (HIF_ADDR >> (6+map_row_b0))&0x01        ;//HIF_ADDR[6 +int(map_row_b0 ,2)] 
+    
+    if (map_col_b11 == 0x1f)  //'11111111111111111111111111111111'[0:len(map_col_b11)]:
+        c11   =  0 ;
+    else
+        c11   =   (HIF_ADDR >> (11+map_col_b11))&0x01        ; //HIF_ADDR[11+int(map_col_b11,2)] 
+    if (map_col_b10 == 0x1f) //'11111111111111111111111111111111'[0:len(map_col_b10)]:
+        c10   =  0 ;
+    else
+    	c10   =  (HIF_ADDR >> (10+map_col_b10))&0x01        ;//HIF_ADDR[10+int(map_col_b10,2)] 
+    c9    =  (HIF_ADDR >> (9+map_col_b9))&0x01        ;//HIF_ADDR[9 +int(map_col_b9 ,2)] 
+    c8    =  (HIF_ADDR >> (8+map_col_b8))&0x01        ;//HIF_ADDR[8 +int(map_col_b8 ,2)] 
+    c7    =  (HIF_ADDR >> (7+map_col_b7))&0x01        ;//HIF_ADDR[7 +int(map_col_b7 ,2)] 
+    c6    =  (HIF_ADDR >> (6+map_col_b6))&0x01        ;//HIF_ADDR[6 +int(map_col_b6 ,2)] 
+    c5    =  (HIF_ADDR >> (5+map_col_b5))&0x01        ;//HIF_ADDR[5 +int(map_col_b5 ,2)] 
+    c4    =  (HIF_ADDR >> (4+map_col_b4))&0x01        ;//HIF_ADDR[4 +int(map_col_b4 ,2)] 
+    c3    =  (HIF_ADDR >> (3+map_col_b3))&0x01        ;//HIF_ADDR[3 +int(map_col_b3 ,2)] 
+    c2    =  (HIF_ADDR >> (2+map_col_b2))&0x01        ;//HIF_ADDR[2 +int(map_col_b2 ,2)] 
+    c1    = 0;
+    c0    = 0;
+    cs    = cs0;
+    bank  = (b2<<2)+(b1<<1)+b0;
+    row   = (r14<<14)+(r13<<13)+(r12<<12)+(r11<<11)+(r10<<10)+(r9<<9)+(r8<<8)+(r7<<7)+(r6<<6)+(r5<<5)+(r4<<4)+(r3<<3)+(r2<<2)+(r1<<1)+r0;
+	column= (c9<<9)+(c8<<8)+(c7<<7)+(c6<<6)+(c5<<5)+(c4<<4)+(c3<<3)+(c2<<2)+(c1<<1)+c0;
+	int bank_addr_width = 3;
+    int row_addr_width  = 15;
+    int column_addr_width = 10;
+    dram_view = (bank << (row_addr_width + column_addr_width)) | row << (column_addr_width) | column;
 	return dram_view;
 }
 
@@ -143,7 +198,7 @@ int main(int argc, char **argv)
 	struct stat st;
 	FILE *fp_in = NULL, *fp_out[4] = { 0 }; // = NULL;
 #ifdef ZMEM_DRAM_XTOR_32B_SEP
-	int sep_files = 2; // zmem.hex, zmem2.hex
+	int sep_files = 4; // zmem.hex, zmem2.hex
 #else
 	int sep_files = 1; // zmem.hex
 #endif
@@ -190,8 +245,8 @@ int main(int argc, char **argv)
 
 	zmem_off_zw = zmem_off / zw_step;
 
-	printf("input=%s output=%s in_skip=0x%x zmem_off=0x%x (qw=0x%x) sep=%d\n",
-		input, output, in_skip, zmem_off, zmem_off_zw, sep_files);
+	printf("input=%s output=%s in_skip=0x%x zmem_off=0x%x (qw=0x%x) sep=%d dxtor=%d \n",
+		input, output, in_skip, zmem_off, zmem_off_zw, sep_files,dxtor);
 
 	// get file size
 	memset(&st, 0, sizeof(st));
@@ -224,13 +279,20 @@ int main(int argc, char **argv)
 #ifdef ZMEM_DRAM_XTOR_32B_SEP
 	if (dxtor) {
 		res = strlen(output) + 1; // 8+1  (0 ended)
-
 		for (i = 1; i < sep_files; i++) {
 			z_out[i] = malloc(res + 1); // zmem.hex -> zmem2.hex
-			strcpy(z_out[i], output);
-			strcpy(z_out[i] + res - 5, "x.hex");
-			z_out[i][res - 5] = '1' + i; // 2 3 4
-
+			if(i == 1)
+			{
+				strcpy(z_out[i], ZMEM0B_HEX);
+			}
+			else if(i == 2)
+			{
+				strcpy(z_out[i], ZMEM1A_HEX);
+			}
+			else if(i == 3)
+			{
+				strcpy(z_out[i], ZMEM1B_HEX);
+			}
 			dbg("fopen %s\n", z_out[i]);
 			fp_out[i] = fopen(z_out[i], "a+");
 			if (NULL == fp_out[i]) {
@@ -257,7 +319,7 @@ int main(int argc, char **argv)
 			int pad = zw_step - (got % zw_step);
 			if (pad != zw_step) {
 				dbg("pad %d\n", pad);
-				// pad with 0 until next zw_step-byte aligned address
+				// pad with 0 until next zw_step-byte aligned #define ADDress
 				memset(&buf[got], 0, pad);
 				got += pad;
 			}
@@ -268,7 +330,7 @@ int main(int argc, char **argv)
 			//   @<zword off>	<zword value>
 
 			if (dxtor && sep_files == 2) {
-				zw_off = cpu2dxtor_view(zmem_off_zw * zw_step);
+				//zw_off = cpu2dxtor_view(zmem_off_zw * zw_step);
 			} else if (dxtor && sep_files == 4) {
 				zw_off = cpu2dxtor_view_8x4(zmem_off_zw * zw_step);
 			} else {
@@ -291,10 +353,18 @@ int main(int argc, char **argv)
 					fprintf(fp_out[0], "@%x %04x\n", (int)zw_off, val & 0xffff);
 					fprintf(fp_out[1], "@%x %04x\n", (int)zw_off, (val >> 16) & 0xffff);
 				} else if (sep_files == 4) {
-					fprintf(fp_out[0], "@%x %02x\n", (int)zw_off, (val      ) & 0xff);
-					fprintf(fp_out[1], "@%x %02x\n", (int)zw_off, (val >>  8) & 0xff);
-					fprintf(fp_out[2], "@%x %02x\n", (int)zw_off, (val >> 16) & 0xff);
-					fprintf(fp_out[3], "@%x %02x\n", (int)zw_off, (val >> 24) & 0xff);
+					int new_zw_off = zw_off+(((zmem_off_zw * zw_step)>>2)&0xf);
+					if(cs == 0)
+					{	
+						fprintf(fp_out[0], "@%x %04x\n", (int)new_zw_off, (val      ) & 0xffff);
+						fprintf(fp_out[1], "@%x %04x\n", (int)new_zw_off, (val >>  16) & 0xffff);
+					}
+					else
+					{
+						fprintf(fp_out[2], "@%x %04x\n", (int)new_zw_off, (val >> 0) & 0xffff);
+						fprintf(fp_out[3], "@%x %04x\n", (int)new_zw_off, (val >> 16) & 0xffff);
+					}
+
 				}
 #else
 				fprintf(fp_out[0], "@%x %08x\n", (int)zw_off, val);
@@ -320,5 +390,6 @@ err_out:
 			free(z_out[i]);
 	}
 #endif
+
 	return 0;
 }

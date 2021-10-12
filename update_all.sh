@@ -116,7 +116,7 @@ else
 				cp -f out/outfile_sb.bin ../../../../ipack/bin/$VMLINUX.bin
 				cd ../../../../ipack
 			fi
-			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x480000 0x480000 kernel
+			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x400000 0x400000 kernel
 		fi
 	fi
 fi
@@ -275,8 +275,8 @@ else
 	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
 	$B2ZMEM  bin/$BL31        $ZMEM_HEX     0x0       $((0x0200000 - 0x40)) $DXTOR # 2MB - 64
 	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) $DXTOR # 3MB - 64 (uboot before relocation)
-	$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x0400000 - 0x40)) $DXTOR # 4MB - 64
-	$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0480000 - 0x40)) $DXTOR # 4MB + 512KB - 64
+	$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x03f0000 - 0x40)) $DXTOR # 3MB + 960K - 64
+	$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0400000 - 0x40)) $DXTOR # 4MB + 512KB - 64
 	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       $((0x3f00000 - 0x40)) $DXTOR # 63MB - 64 (uboot after relocation)
 	$B2ZMEM  $M4              $ZMEM_HEX     0x0       0x1e000000            $DXTOR
 	zmem_kernel_max_size=$((0x3a80000))

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #./update_me.sh <source_img>
 source ../.config
 

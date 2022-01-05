@@ -55,16 +55,16 @@ NONOS=rom.img
 ROOTFS=rootfs.img
 LINUX=uImage
 BL31=bl31.img
-if [ "$CHIP" = "Q645" ]; then
-kernel_max_size=$((0xde0000))
+if [ "$CHIP" = "Q645" -o "$CHIP" = "Q654" ]; then
+	kernel_max_size=$((0xde0000))
 else
-kernel_max_size=$((0xe00000))
+	kernel_max_size=$((0xe00000))
 fi
 
 if [ "$ZEBU_RUN" = "1" ];then
-VMLINUX=vmlinux   # Use uncompressed uImage (qkboot + uncompressed vmlinux)
+	VMLINUX=vmlinux   # Use uncompressed uImage (qkboot + uncompressed vmlinux)
 else
-VMLINUX=          # Use compressed uImage
+	VMLINUX=          # Use compressed uImage
 fi
 DTB=dtb
 FREEROTS=freertos
@@ -75,6 +75,8 @@ echo "* Update from source images..."
 if [ "$pf_type" = "s" ];then
 	if [ "$CHIP" = "Q645" ]; then
 		./update_me.sh ../boot/iboot/iboot_q645/bin/$BOOTROM && warn_up_ok $BOOTROM
+	elif [ "$CHIP" = "Q654" ]; then
+		./update_me.sh ../boot/iboot/iboot_q654/bin/$BOOTROM && warn_up_ok $BOOTROM
 	else
 		./update_me.sh ../boot/iboot/iboot_q628/bin/$BOOTROM && warn_up_ok $BOOTROM
 	fi
@@ -109,7 +111,7 @@ else
 		if [ "$CHIP" = "Q628" ]; then
 			armv5-glibc-linux-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
 			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x308000 0x308000 kernel
-		elif [ "$CHIP" = "Q645" ]; then
+		elif [ "$CHIP" = "Q645" -o "$CHIP" = "Q654" ]; then
 			aarch64-none-linux-gnu-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
 			if [ "$SECURE" = "1" ]; then
 				cd ../build/tools/secure_hsm/secure
@@ -142,7 +144,7 @@ if [ "$ARCH" = "riscv" ]; then
 	./add_uhdr.sh freertos-`date +%Y%m%d-%H%M%S` bin/$FREEROTS.bin bin/$FREEROTS.img $ARCH
 fi
 
-if [ "$CHIP" = "Q645" ]; then
+if [ "$CHIP" = "Q645" -o "$CHIP" = "Q654" ]; then
 	./update_me.sh ../boot/trusted-firmware-a/build/$BL31  && warn_up_ok $BL31
 fi
 
@@ -168,19 +170,19 @@ if [ "$ZEBU_RUN" = "0" ]; then
 	echo ""
 	echo "* Gen NOR image: $IMG_OUT ..."
 	if [ -f bin/$BOOTROM ]; then
-		dd if=bin/$BOOTROM     of=bin/$IMG_OUT
+		dd if=bin/$BOOTROM of=bin/$IMG_OUT
 	else
 		rm -f bin/$IMG_OUT
 	fi
 
-	if [ "$CHIP" = "Q645" ]; then
-		dd if=bin/$XBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=96
-		dd if=bin/dtb.img      of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
-		dd if=bin/$UBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=384
+	if [ "$CHIP" = "Q645" -o "$CHIP" = "Q654" ]; then
+		dd if=bin/$XBOOT  of=bin/$IMG_OUT conv=notrunc bs=1k seek=96
+		dd if=bin/dtb.img of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
+		dd if=bin/$UBOOT  of=bin/$IMG_OUT conv=notrunc bs=1k seek=384
 	else
-		dd if=bin/$XBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=64
-		dd if=bin/dtb.img      of=bin/$IMG_OUT conv=notrunc bs=1k seek=128
-		dd if=bin/$UBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
+		dd if=bin/$XBOOT  of=bin/$IMG_OUT conv=notrunc bs=1k seek=64
+		dd if=bin/dtb.img of=bin/$IMG_OUT conv=notrunc bs=1k seek=128
+		dd if=bin/$UBOOT  of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
 	fi
 
 	if [ "$BOOT_KERNEL_FROM_TFTP" != "1" ]; then
@@ -199,13 +201,13 @@ if [ "$ZEBU_RUN" = "0" ]; then
 			fi
 		else
 			if [ -f bin/$NONOS ]; then
-				if [ "$CHIP" = "Q645" ]; then
+				if [ "$CHIP" = "Q645" -o "$CHIP" = "Q654" ]; then
 					dd if=bin/$NONOS of=bin/$IMG_OUT conv=notrunc bs=1k seek=1152
 				else
 					dd if=bin/$NONOS of=bin/$IMG_OUT conv=notrunc bs=1k seek=1024
 				fi
 			fi
-			if [ "$CHIP" = "Q645" ]; then
+			if [ "$CHIP" = "Q645" -o "$CHIP" = "Q654" ]; then
 				dd if=bin/$LINUX of=bin/$IMG_OUT conv=notrunc bs=1k seek=2176
 			else
 				dd if=bin/$LINUX of=bin/$IMG_OUT conv=notrunc bs=1k seek=2048
@@ -225,7 +227,7 @@ if [ "$ZEBU_RUN" = "0" ]; then
 				kernel_sz_1k=$((((kernel_sz+65535)/65536)*64))
 
 				# Calculate offset of rootfs.
-				if [ "$CHIP" = "Q645" ]; then
+				if [ "$CHIP" = "Q645" -o "$CHIP" = "Q654" ]; then
 					rootfs_offset=$((kernel_sz_1k+2048+128))
 				else
 					rootfs_offset=$((kernel_sz_1k+2048))
@@ -258,52 +260,59 @@ else
 	fi
 	rm -f $ZMEM_HEX
 	#        in               out           in_skip   DRAM_off
-	if [ "$CHIP" == "Q645" ]; then
-	# Gen Q645_run.hex for xboot.img
-	if [ -f bin/$BOOTROM ]; then
-		dd if=bin/$BOOTROM     of=bin/$IMG_OUT
-	else
-		rm -f bin/$IMG_OUT
-	fi
-	dd if=bin/$XBOOT       of=bin/$IMG_OUT conv=notrunc bs=1k seek=96
-	./tools/gen_hex.sh bin/$IMG_OUT bin/Q645_run.hex
-	# Gen zmem*.hex
-	rm -f ./bin/zmem*.hex
-	ZMEM_HEX=./bin/zmem0a.hex
-	#B2ZMEM=./tools/bin2zmem/bin2zmem_ddr4.sh
-	B2ZMEM=./tools/bin2zmem/bin2zmem_q645
-	M4=../freertos/q645/build/m4.bin
-	DXTOR=1
-	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
-	$B2ZMEM  bin/$BL31        $ZMEM_HEX     0x0       $((0x0200000 - 0x40)) $DXTOR # 2MB - 64
-	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) $DXTOR # 3MB - 64 (uboot before relocation)
-	$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x03f0000 - 0x40)) $DXTOR # 3MB + 960K - 64
-	$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0400000 - 0x40)) $DXTOR # 4MB + 512KB - 64
-	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       $((0x3f00000 - 0x40)) $DXTOR # 63MB - 64 (uboot after relocation)
-	$B2ZMEM  $M4              $ZMEM_HEX     0x0       0x1e000000            $DXTOR
-	zmem_kernel_max_size=$((0x3a80000))
+	if [ "$CHIP" == "Q645" -o "$CHIP" = "Q654" ]; then
+		# Gen Q645_run.hex or Q654_run.hex for xboot.img
+		if [ -f bin/$BOOTROM ]; then
+			dd if=bin/$BOOTROM     of=bin/$IMG_OUT
+		else
+			rm -f bin/$IMG_OUT
+		fi
+		dd if=bin/$XBOOT of=bin/$IMG_OUT conv=notrunc bs=1k seek=96
+		if [ "$CHIP" == "Q645" ]; then
+			./tools/gen_hex.sh bin/$IMG_OUT bin/Q645_run.hex
+		else
+			./tools/gen_hex.sh bin/$IMG_OUT bin/Q654_run.hex
+		fi
+
+		# Gen zmem*.hex
+		rm -f ./bin/zmem*.hex
+		ZMEM_HEX=./bin/zmem0a.hex
+		#B2ZMEM=./tools/bin2zmem/bin2zmem_ddr4.sh
+		B2ZMEM=./tools/bin2zmem/bin2zmem_q645
+		M4=../freertos/q645/build/m4.bin
+		DXTOR=1
+		$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
+		$B2ZMEM  bin/$BL31        $ZMEM_HEX     0x0       $((0x0200000 - 0x40)) $DXTOR # 2MB - 64
+		$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) $DXTOR # 3MB - 64 (uboot before relocation)
+		$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x03f0000 - 0x40)) $DXTOR # 3MB + 960K - 64
+		$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0400000 - 0x40)) $DXTOR # 4MB + 512KB - 64
+		$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       $((0x3f00000 - 0x40)) $DXTOR # 63MB - 64 (uboot after relocation)
+		$B2ZMEM  $M4              $ZMEM_HEX     0x0       0x1e000000            $DXTOR
+		zmem_kernel_max_size=$((0x3a80000))
 	elif [ "$CHIP" == "Q628" ]; then
-	$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
-	$B2ZMEM  bin/$NONOS       $ZMEM_HEX     0x0       0x0010000             $DXTOR # 64KB
-	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x0200000             $DXTOR # 2MB  (uboot before relocation)
-	$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) $DXTOR # 3MB - 64
-	$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0308000 - 0x40)) $DXTOR # 3MB + 32KB - 64
-	$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x1F00000             $DXTOR # 31MB (uboot after relocation)
-	zmem_kernel_max_size=$((0x1bf8000))
+		$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
+		$B2ZMEM  bin/$NONOS       $ZMEM_HEX     0x0       0x0010000             $DXTOR # 64KB
+		$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x0200000             $DXTOR # 2MB  (uboot before relocation)
+		$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) $DXTOR # 3MB - 64
+		$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x0308000 - 0x40)) $DXTOR # 3MB + 32KB - 64
+		$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x1F00000             $DXTOR # 31MB (uboot after relocation)
+		zmem_kernel_max_size=$((0x1bf8000))
 	elif [ "$CHIP" == "I143" ]; then
-	#RISCV zmem Memory:{freertos|xboot|uboot|opensbi|dtb|kernel}
-	$B2ZMEM  bin/$FREEROTS.img      $ZMEM_HEX     0x0       0x00000000              $DXTOR # 0
-	$B2ZMEM  bin/$XBOOT             $ZMEM_HEX     0x0       0x000F0000              $DXTOR # 960KB
-	$B2ZMEM  bin/$UBOOT             $ZMEM_HEX     0x0       $((0x0100000 - 0x40))   $DXTOR # 1MB - 64 (OpenSBI start 0x1D0000)
-#	$B2ZMEM  bin/dtb.img            $ZMEM_HEX     0x0       $((0x01F0000 - 0x40))   $DXTOR # 1M + 960KB - 64
-	if [ "$ARCH" = "riscv" ]; then
-		$B2ZMEM  bin/$LINUX     $ZMEM_HEX     0x0       $((0x0200000 - 0x40))   $DXTOR # 2MB - 64
-	else
-		$B2ZMEM  bin/$LINUX     $ZMEM_HEX     0x0       $((0x0208000 - 0x40))   $DXTOR # 2MB + 32KB - 64
+		#RISCV zmem Memory:{freertos|xboot|uboot|opensbi|dtb|kernel}
+		$B2ZMEM  bin/$FREEROTS.img      $ZMEM_HEX     0x0       0x00000000              $DXTOR # 0
+		$B2ZMEM  bin/$XBOOT             $ZMEM_HEX     0x0       0x000F0000              $DXTOR # 960KB
+		$B2ZMEM  bin/$UBOOT             $ZMEM_HEX     0x0       $((0x0100000 - 0x40))   $DXTOR # 1MB - 64 (OpenSBI start 0x1D0000)
+	#	$B2ZMEM  bin/dtb.img            $ZMEM_HEX     0x0       $((0x01F0000 - 0x40))   $DXTOR # 1M + 960KB - 64
+		if [ "$ARCH" = "riscv" ]; then
+			$B2ZMEM  bin/$LINUX     $ZMEM_HEX     0x0       $((0x0200000 - 0x40))   $DXTOR # 2MB - 64
+		else
+			$B2ZMEM  bin/$LINUX     $ZMEM_HEX     0x0       $((0x0208000 - 0x40))   $DXTOR # 2MB + 32KB - 64
+		fi
+		zmem_kernel_max_size=$((0x1df8000))
 	fi
-	zmem_kernel_max_size=$((0x1df8000))
-	fi
+
 	ls -lh $ZMEM_HEX
+
 	# check linux image size
 	kernel_sz=`du -sb bin/$LINUX | cut -f1`
 	if [[ $kernel_sz -gt ${zmem_kernel_max_size} ]]; then

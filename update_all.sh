@@ -55,7 +55,7 @@ NONOS=rom.img
 ROOTFS=rootfs.img
 LINUX=uImage
 BL31=bl31.img
-if [ "$CHIP" = "Q645" -o "$CHIP" = "Q654" ]; then
+if [ "$CHIP" = "Q645" -o "$CHIP" = "SP7350" ]; then
 	kernel_max_size=$((0xde0000))
 else
 	kernel_max_size=$((0xe00000))
@@ -75,7 +75,7 @@ echo "* Update from source images..."
 if [ "$pf_type" = "s" ];then
 	if [ "$CHIP" = "Q645" ]; then
 		./update_me.sh ../boot/iboot/iboot_q645/bin/$BOOTROM && warn_up_ok $BOOTROM
-	elif [ "$CHIP" = "Q654" ]; then
+	elif [ "$CHIP" = "SP7350" ]; then
 		./update_me.sh ../boot/iboot/iboot_q654/bin/$BOOTROM && warn_up_ok $BOOTROM
 	else
 		./update_me.sh ../boot/iboot/iboot_q628/bin/$BOOTROM && warn_up_ok $BOOTROM
@@ -111,7 +111,7 @@ else
 		if [ "$CHIP" = "Q628" ]; then
 			armv5-glibc-linux-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
 			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x308000 0x308000 kernel
-		elif [ "$CHIP" = "Q645" -o "$CHIP" = "Q654" ]; then
+		elif [ "$CHIP" = "Q645" -o "$CHIP" = "SP7350" ]; then
 			aarch64-none-linux-gnu-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
 			if [ "$SECURE" = "1" ]; then
 				cd ../build/tools/secure_hsm/secure
@@ -144,7 +144,7 @@ if [ "$ARCH" = "riscv" ]; then
 	./add_uhdr.sh freertos-`date +%Y%m%d-%H%M%S` bin/$FREEROTS.bin bin/$FREEROTS.img $ARCH
 fi
 
-if [ "$CHIP" = "Q645" -o "$CHIP" = "Q654" ]; then
+if [ "$CHIP" = "Q645" -o "$CHIP" = "SP7350" ]; then
 	./update_me.sh ../boot/trusted-firmware-a/build/$BL31  && warn_up_ok $BL31
 fi
 
@@ -175,7 +175,7 @@ if [ "$ZEBU_RUN" = "0" ]; then
 		rm -f bin/$IMG_OUT
 	fi
 
-	if [ "$CHIP" = "Q645" -o "$CHIP" = "Q654" ]; then
+	if [ "$CHIP" = "Q645" -o "$CHIP" = "SP7350" ]; then
 		dd if=bin/$XBOOT  of=bin/$IMG_OUT conv=notrunc bs=1k seek=96
 		dd if=bin/dtb.img of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
 		dd if=bin/$UBOOT  of=bin/$IMG_OUT conv=notrunc bs=1k seek=384
@@ -201,13 +201,13 @@ if [ "$ZEBU_RUN" = "0" ]; then
 			fi
 		else
 			if [ -f bin/$NONOS ]; then
-				if [ "$CHIP" = "Q645" -o "$CHIP" = "Q654" ]; then
+				if [ "$CHIP" = "Q645" -o "$CHIP" = "SP7350" ]; then
 					dd if=bin/$NONOS of=bin/$IMG_OUT conv=notrunc bs=1k seek=1152
 				else
 					dd if=bin/$NONOS of=bin/$IMG_OUT conv=notrunc bs=1k seek=1024
 				fi
 			fi
-			if [ "$CHIP" = "Q645" -o "$CHIP" = "Q654" ]; then
+			if [ "$CHIP" = "Q645" -o "$CHIP" = "SP7350" ]; then
 				dd if=bin/$LINUX of=bin/$IMG_OUT conv=notrunc bs=1k seek=2176
 			else
 				dd if=bin/$LINUX of=bin/$IMG_OUT conv=notrunc bs=1k seek=2048
@@ -227,7 +227,7 @@ if [ "$ZEBU_RUN" = "0" ]; then
 				kernel_sz_1k=$((((kernel_sz+65535)/65536)*64))
 
 				# Calculate offset of rootfs.
-				if [ "$CHIP" = "Q645" -o "$CHIP" = "Q654" ]; then
+				if [ "$CHIP" = "Q645" -o "$CHIP" = "SP7350" ]; then
 					rootfs_offset=$((kernel_sz_1k+2048+128))
 				else
 					rootfs_offset=$((kernel_sz_1k+2048))
@@ -260,8 +260,8 @@ else
 	fi
 	rm -f $ZMEM_HEX
 	#        in               out           in_skip   DRAM_off
-	if [ "$CHIP" == "Q645" -o "$CHIP" = "Q654" ]; then
-		# Gen Q645_run.hex or Q654_run.hex for xboot.img
+	if [ "$CHIP" == "Q645" -o "$CHIP" = "SP7350" ]; then
+		# Gen Q645_run.hex or SP7350_run.hex for xboot.img
 		if [ -f bin/$BOOTROM ]; then
 			dd if=bin/$BOOTROM     of=bin/$IMG_OUT
 		else
@@ -271,7 +271,7 @@ else
 		if [ "$CHIP" == "Q645" ]; then
 			./tools/gen_hex.sh bin/$IMG_OUT bin/Q645_run.hex
 		else
-			./tools/gen_hex.sh bin/$IMG_OUT bin/Q654_run.hex
+			./tools/gen_hex.sh bin/$IMG_OUT bin/SP7350_run.hex
 		fi
 
 		# Gen zmem*.hex

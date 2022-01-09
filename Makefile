@@ -15,7 +15,7 @@ ARCH ?= arm
 ifeq ($(CHIP),Q645)
 ARCH=arm64
 endif
-ifeq ($(CHIP),Q654)
+ifeq ($(CHIP),SP7350)
 ARCH=arm64
 endif
 
@@ -41,7 +41,7 @@ $(SPI_ALL):
 isp: all
 	@echo "Build $(ISP_IMG)"
 	@dd if=bin/xboot.img of=$(BIN)/$(ISP_IMG)
-	@if [ "$(CHIP)" = "Q645" -o "$(CHIP)" = "Q654" ]; then \
+	@if [ "$(CHIP)" = "Q645" -o "$(CHIP)" = "SP7350" ]; then \
 		dd if=bin/u-boot.img of=$(BIN)/$(ISP_IMG) conv=notrunc bs=1k seek=160 ; \
 	else \
 		dd if=bin/u-boot.img of=$(BIN)/$(ISP_IMG) conv=notrunc bs=1k seek=64 ; \

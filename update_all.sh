@@ -201,13 +201,15 @@ if [ "$ZEBU_RUN" = "0" ]; then
 			fi
 		else
 			if [ -f bin/$NONOS ]; then
-				if [ "$CHIP" = "Q645" -o "$CHIP" = "SP7350" ]; then
+				if [ "$CHIP" = "Q645" ]; then
 					dd if=bin/$NONOS of=bin/$IMG_OUT conv=notrunc bs=1k seek=1152
+				elif [ "$CHIP" = "SP7350" ]; then
+					dd if=bin/$NONOS of=bin/$IMG_OUT conv=notrunc bs=1k seek=1408
 				else
 					dd if=bin/$NONOS of=bin/$IMG_OUT conv=notrunc bs=1k seek=1024
 				fi
 			fi
-			if [ "$CHIP" = "Q645" -o "$CHIP" = "SP7350" ]; then
+			if [ "$CHIP" = "Q645" ]; then
 				dd if=bin/$LINUX of=bin/$IMG_OUT conv=notrunc bs=1k seek=2176
 			else
 				dd if=bin/$LINUX of=bin/$IMG_OUT conv=notrunc bs=1k seek=2048

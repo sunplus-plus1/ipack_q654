@@ -201,19 +201,12 @@ if [ "$ZEBU_RUN" = "0" ]; then
 			fi
 		else
 			if [ -f bin/$NONOS ]; then
-				if [ "$CHIP" = "Q645" ]; then
-					dd if=bin/$NONOS of=bin/$IMG_OUT conv=notrunc bs=1k seek=1152
-				elif [ "$CHIP" = "SP7350" ]; then
-					dd if=bin/$NONOS of=bin/$IMG_OUT conv=notrunc bs=1k seek=1408
-				else
+				if [ "$CHIP" = "Q628" -o "$CHIP" = "I143" ]; then
 					dd if=bin/$NONOS of=bin/$IMG_OUT conv=notrunc bs=1k seek=1024
 				fi
 			fi
-			if [ "$CHIP" = "Q645" ]; then
-				dd if=bin/$LINUX of=bin/$IMG_OUT conv=notrunc bs=1k seek=2176
-			else
-				dd if=bin/$LINUX of=bin/$IMG_OUT conv=notrunc bs=1k seek=2048
-			fi
+
+			dd if=bin/$LINUX of=bin/$IMG_OUT conv=notrunc bs=1k seek=2048
 
 			if [ "$NOR_JFFS2" == "1" ]; then
 				# Generate jffs2 rootfs for SPI-NOR
@@ -229,11 +222,7 @@ if [ "$ZEBU_RUN" = "0" ]; then
 				kernel_sz_1k=$((((kernel_sz+65535)/65536)*64))
 
 				# Calculate offset of rootfs.
-				if [ "$CHIP" = "Q645" -o "$CHIP" = "SP7350" ]; then
-					rootfs_offset=$((kernel_sz_1k+2048+128))
-				else
-					rootfs_offset=$((kernel_sz_1k+2048))
-				fi
+				rootfs_offset=$((kernel_sz_1k+2048))
 
 				dd if=bin/$ROOTFS of=bin/$IMG_OUT conv=notrunc bs=1k seek=$rootfs_offset
 

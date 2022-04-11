@@ -51,8 +51,13 @@ isp: all
 # Pack for SPI-NOR boot testing
 nor_hex:
 	@if [ ! -f $(BIN)/$(SPI_ALL) ]; then echo "No input : $(BIN)/$(SPI_ALL)" ; exit 1 ; fi
-	@echo "* Gen NOR Hex : $(CHIP)_run.hex"
-	@./tools/gen_hex.sh $(BIN)/$(SPI_ALL) $(BIN)/$(CHIP)_run.hex ;
+	@if [ "$(CHIP)" = "SP7350" ]; then \
+		echo "* Gen NOR Hex : Q654_run.hex" ; \
+		./tools/gen_hex.sh $(BIN)/$(SPI_ALL) $(BIN)/Q654_run.hex ; \
+	else \
+		echo "* Gen NOR Hex : $(CHIP)_run.hex" ; \
+		./tools/gen_hex.sh $(BIN)/$(SPI_ALL) $(BIN)/$(CHIP)_run.hex ; \
+	fi;
 
 ###############################
 # To create isp disk hex for zebu

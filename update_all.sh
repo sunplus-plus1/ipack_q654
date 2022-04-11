@@ -252,7 +252,7 @@ else
 	rm -f $ZMEM_HEX
 	#        in               out           in_skip   DRAM_off
 	if [ "$CHIP" == "Q645" -o "$CHIP" = "SP7350" ]; then
-		# Gen Q645_run.hex or SP7350_run.hex for xboot.img
+		# Gen Q645_run.hex or Q654_run.hex for xboot.img
 		if [ -f bin/$BOOTROM ]; then
 			dd if=bin/$BOOTROM     of=bin/$IMG_OUT
 		else
@@ -262,7 +262,7 @@ else
 		if [ "$CHIP" == "Q645" ]; then
 			./tools/gen_hex.sh bin/$IMG_OUT bin/Q645_run.hex
 		else
-			./tools/gen_hex.sh bin/$IMG_OUT bin/SP7350_run.hex
+			./tools/gen_hex.sh bin/$IMG_OUT bin/Q654_run.hex
 		fi
 
 		# Gen zmem*.hex

@@ -60,11 +60,13 @@ nor_hex:
 	fi;
 
 ###############################
-# To create isp disk hex for zebu
-# 1. make isp --> gen ispbooot.BIN
-# 2. Read disk/sample_note.txt to learn how to create disk/sd64m.bin
-# 4. make disk_hex --> gen disk/sd_image.hex from disk/sd64m.bin
-# 5. upload the hex to zebu : hex_files/MMC/sd_image.hex
+# Create SD card hex file for Zebu
+# 1. Run 'make config' to configure compilation environment for booting from SD card.
+# 2. Run 'make' to build all, including image file of SD card: 'out/boot2linux_SDcard/ISP_SD_BOOOT.img'.
+# 3. Copy image file 'out/boot2linux_SDcard/ISP_SD_BOOOT.img' to 'ipack/disk/sd64m.bin'.
+# 4. Run 'cd ipack' to go to folder 'ipack'.
+# 5. Run 'make sd_hex' to convert binary file 'disk/sd64m.bin' to hex file 'disk/sd_image.hex'.
+# 6. Transfer hex file 'sd_image.hex' to zebu folder 'hex_files/MMC/'.
 DISK_IN=disk/sd64m.bin
 DISK_OUT=disk/sd_image.hex
 sd_hex:

@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # script for generating jffs2 root file-system (rootfs) for SPI-NOR
 #
@@ -27,7 +28,7 @@ rootfs_sz=$((SPI_NOR_SIZE*1024*1024-rootfs_offset*1024))
 
 # Check if rootfs directory exists?
 if [ ! -d $ROOTFS_DIR ]; then
-	echo "Error: $ROOTFS_DIR doesn't exist!"
+	echo "\E[1;31mError: $ROOTFS_DIR doesn't exist!\E[0m"
 	exit 1
 fi
 
@@ -47,6 +48,6 @@ echo "Size of $ROOTFS_IMG (jffs2) is $rootfs_sz2 kbytes"
 # check rootfs image size
 rootfs_sz2=$((rootfs_sz2*1024))
 if [ $rootfs_sz2 -gt $rootfs_sz ]; then
-	echo -e "\E[1;33mWarning: Size of $ROOTFS_IMG is too big!\E[0m"
+	echo -e "\E[1;31mError: Size of $ROOTFS_IMG is too big!\E[0m"
 	exit 1
 fi

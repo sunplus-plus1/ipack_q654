@@ -41,13 +41,14 @@ echo -e  "\E[1;33m ========make jffs2 fs========== \E[0m"
 echo "$JFFS2 -s 0x1000 -e 0x10000 -d "$ROOTFS_DIR" -o $ROOTFS_IMG"
 $JFFS2 -s 0x1000 -e 0x10000 -d "$ROOTFS_DIR" -o $ROOTFS_IMG
 
-# Get real size of rootfs image.
+# Get real size and percentage of rootfs image.
 rootfs_sz2=`du -sk $ROOTFS_IMG | cut -f1`
-echo "Size of $ROOTFS_IMG (jffs2) is $rootfs_sz2 kbytes"
+rootfs_sz3=$((rootfs_sz2*1024))
+rootfs_percentage=$(((rootfs_sz3*100)/$rootfs_sz))
+echo -e "\E[1;33mSize of $ROOTFS_IMG (jffs2) is $rootfs_sz2 kbytes ($rootfs_percentage%)\E[0m"
 
 # check rootfs image size
-rootfs_sz2=$((rootfs_sz2*1024))
-if [ $rootfs_sz2 -gt $rootfs_sz ]; then
+if [ $rootfs_sz3 -gt $rootfs_sz ]; then
 	echo -e "\E[1;31mError: Size of $ROOTFS_IMG is too big!\E[0m"
 	exit 1
 fi

@@ -270,7 +270,7 @@ else
 		ZMEM_HEX=./bin/zmem0a.hex
 		#B2ZMEM=./tools/bin2zmem/bin2zmem_ddr4.sh
 		B2ZMEM=./tools/bin2zmem/bin2zmem_q645
-		#M4=../freertos/q645/build/m4.bin
+		M4=../freertos/q645/build/m4.bin
 		DXTOR=1
 		$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
 		$B2ZMEM  bin/$BL31        $ZMEM_HEX     0x0       $((0x0200000 - 0x40)) $DXTOR # 2MB - 64
@@ -278,7 +278,7 @@ else
 		$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x1f80000 - 0x40)) $DXTOR # 31MB + 512KB - 64
 		$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x2000000 - 0x40)) $DXTOR # 32MB - 64
 		$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       $((0xff00000 - 0x40)) $DXTOR # 255MB - 64 (uboot after relocation)
-		#$B2ZMEM $M4              $ZMEM_HEX     0x0       0x1e000000            $DXTOR
+		$B2ZMEM  $M4              $ZMEM_HEX     0x0       0x77000000            $DXTOR
 		zmem_kernel_max_size=$((0xdf00000))
 	elif [ "$CHIP" == "Q628" ]; then
 		$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB

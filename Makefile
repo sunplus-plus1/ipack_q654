@@ -134,7 +134,6 @@ TO_RM   := $(SPI_ALL) $(ISP_IMG) *.hex \
 
 clean:
 	make -C tools/bin2zmem $@
-	make -C tools/pack_zebu_nand $@
 	rm -f $(CFG)
 	cd $(BIN) && rm -f $(TO_RM)
 	-rm -f $(DISK_OUT) $(NAND_ZEBU_BIN) $(NAND_ZEBU_HEX)

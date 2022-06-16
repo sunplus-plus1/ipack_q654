@@ -127,14 +127,17 @@ zebu_hex_fakedram:
 
 dxtor:
 	@make DXTOR=1
-TO_RM   := $(SPI_ALL) $(SPI_HEX) $(ISP_IMG) zmem.hex \
+TO_RM   := $(SPI_ALL) $(ISP_IMG) *.hex \
 	   bootRom.bin xboot.img u-boot.img ecos.img ecos.img.orig uImage vmlinux vmlinux.bin \
 	   dtb dtb.img \
-	   emmc_user0.bin $(EMMC_BOOT1) $(EMMC_USER)
+	   emmc_user0.bin
+
 clean:
+	make -C tools/bin2zmem $@
+	make -C tools/pack_zebu_nand $@
 	rm -f $(CFG)
-	cd $(BIN) && rm -f $(TO_RM) $(ISP_IMG) $(SPI_HEX) zmem.hex
+	cd $(BIN) && rm -f $(TO_RM)
 	-rm -f $(DISK_OUT) $(NAND_ZEBU_BIN) $(NAND_ZEBU_HEX)
 
-distclean:
+distclean: clean
 	cd $(BIN) && rm -f *.img *.bin

@@ -43,18 +43,18 @@ static void usage(void)
 
 /**############### DDR4 controller ###################*/
 
-#define ADDRMAP0    0x00000008  
-#define ADDRMAP1    0x00000204 
-#define ADDRMAP2    0x02040000 
-#define ADDRMAP3    0x00050406 
+#define ADDRMAP0    0x00000016  
+#define ADDRMAP1    0x00080202 
+#define ADDRMAP2    0x02020000 
+#define ADDRMAP3    0x02020202 
 #define ADDRMAP4    0x00001f1f 
-#define ADDRMAP5    0x0a080309 
-#define ADDRMAP6    0x09080608
-#define ADDRMAP7    0x00000f07
-#define ADDRMAP8    0x00000000 
-#define ADDRMAP9    0x09090b0b 
-#define ADDRMAP10   0x0b0a0602
-#define ADDRMAP11   0x0000000a
+#define ADDRMAP5    0x070f0707 
+#define ADDRMAP6    0x08070707
+#define ADDRMAP7    0x00000f08
+#define ADDRMAP8    0x00003f3f 
+#define ADDRMAP9    0x07070707 
+#define ADDRMAP10   0x07070707
+#define ADDRMAP11   0x001f1f07
 
 unsigned int cs;
 /*  convert from python */

@@ -91,6 +91,21 @@ nand_hex:
 	@ls -l $(NAND_ZEBU_HEX)
 
 ###############################
+# Pack for Parallel-NAND boot testing
+PNAND_TOOL=tools/nand_image_builder
+PNAND_IMAGE=$(PNAND_TOOL)/pnand.img
+PNAND_HEX=nand/pnand.hex
+pnand_hex:
+	@make -C $(PNAND_TOOL) all
+	@if [ ! -f $(PNAND_IMAGE) ]; then \
+		echo "No input : $(PNAND_IMAGE)" ; \
+		exit 1 ; \
+	fi
+	@echo "* Gen zebu PNAND hex $(PNAND_HEX) ..."
+	@hexdump -v -e '1/1 "%02x\n"' $(PNAND_IMAGE) > $(PNAND_HEX)
+	@ls -l $(PNAND_HEX)
+
+###############################
 # Pack for emmc boot testing
 emmc_hex:
 	@echo ""

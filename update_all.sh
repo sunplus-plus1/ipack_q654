@@ -111,7 +111,7 @@ else
 		if [ "$CHIP" = "Q628" ]; then
 			armv5-glibc-linux-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
 			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x308000 0x308000 kernel
-		elif [ "$CHIP" = "Q645" -o "$CHIP" = "SP7350" ]; then
+		elif [ "$CHIP" = "Q645" ]; then
 			aarch64-none-linux-gnu-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
 			if [ "$SECURE" = "1" ]; then
 				cd ../build/tools/secure_hsm/secure
@@ -121,6 +121,10 @@ else
 				cd ../../../../ipack
 			fi
 			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x800000 0x800000 kernel
+		elif [ "$CHIP" = "SP7350" ]; then
+			aarch64-none-linux-gnu-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
+			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x800000 0x800000 kernel
+			make -C ../boot/uboot/board/sunplus/common/secure_sp7350 sign IMG=$(realpath bin/$LINUX)
 		fi
 	fi
 fi

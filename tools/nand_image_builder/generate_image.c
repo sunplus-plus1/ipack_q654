@@ -220,14 +220,15 @@ static int write_page(const struct image_info *info, uint8_t *buffer,
 	//if (eccbytes % 2)
 		//eccbytes++;
 
+	/* page pad 0xff */
 	memset(buffer, 0xff, info->page_size + info->oob_size);
+	fwrite(buffer, info->page_size + info->oob_size, 1, dst);
 
 	/* src file end but partation not end, write 0xff page to dst */
 	if(feof(src)) {
-
-		fwrite(buffer, info->page_size + info->oob_size, 1, dst);
-
 		return 0;
+	} else {
+		fseek(dst, pos, SEEK_SET);
 	}
 
 	for (i = 0; i < steps; i++) {

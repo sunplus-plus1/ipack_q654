@@ -3,7 +3,7 @@
 BIN        := bin
 SPI_ALL    := spi_all.bin
 CFG        := pack.conf
-ISP_IMG    := ispbooot.BIN
+ISP_IMG    := ISPBOOOT.BIN
 EMMC_BOOT1 := emmc_boot1.hex
 EMMC_USER  := emmc_user0.hex
 
@@ -42,7 +42,7 @@ isp: all
 	@echo "Build $(ISP_IMG)"
 	@dd if=bin/xboot.img of=$(BIN)/$(ISP_IMG)
 	@if [ "$(CHIP)" = "Q645" -o "$(CHIP)" = "SP7350" ]; then \
-		dd if=bin/u-boot.img of=$(BIN)/$(ISP_IMG) conv=notrunc bs=1k seek=160 ; \
+		dd if=bin/u-boot.img of=$(BIN)/$(ISP_IMG) conv=notrunc bs=1k seek=192 ; \
 	else \
 		dd if=bin/u-boot.img of=$(BIN)/$(ISP_IMG) conv=notrunc bs=1k seek=64 ; \
 	fi;

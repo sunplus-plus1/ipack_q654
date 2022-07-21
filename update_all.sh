@@ -181,8 +181,8 @@ if [ "$ZEBU_RUN" = "0" ]; then
 
 	if [ "$CHIP" = "Q645" -o "$CHIP" = "SP7350" ]; then
 		dd if=bin/$XBOOT  of=bin/$IMG_OUT conv=notrunc bs=1k seek=96
-		dd if=bin/dtb.img of=bin/$IMG_OUT conv=notrunc bs=1k seek=256
-		dd if=bin/$UBOOT  of=bin/$IMG_OUT conv=notrunc bs=1k seek=384
+		dd if=bin/dtb.img of=bin/$IMG_OUT conv=notrunc bs=1k seek=288
+		dd if=bin/$UBOOT  of=bin/$IMG_OUT conv=notrunc bs=1k seek=416
 	else
 		dd if=bin/$XBOOT  of=bin/$IMG_OUT conv=notrunc bs=1k seek=64
 		dd if=bin/dtb.img of=bin/$IMG_OUT conv=notrunc bs=1k seek=128

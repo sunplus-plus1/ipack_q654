@@ -8,6 +8,8 @@
 
 #include "include/bch.h"
 
+/* TEST_PAGE_4K */
+//#define TEST_PAGE_4K
 /* PNAND actiming */
 #define CONFIG_PNAND
 /* Consider the BBM */
@@ -50,17 +52,34 @@ struct partition_info_s {
 } __attribute__((packed));
 
 struct image_info {
-	u32 ecc_strength;
-	u32 ecc_step_size;
 	u32 page_size;
 	u32 oob_size;
-	u32 usable_page_size;
 	int eraseblock_size;
+	int block_cnt;
 	const u8 *dest;
 	u8  BI_bytes;
+	/* ecc info */
+	u32 ecc_strength;
+	u32 ecc_step_size;
+	u32 usable_page_size;
 };
 
-struct image_info q654_image_info;
+#ifdef TEST_PAGE_4K
+struct image_info q654_image_info = {\
+	.page_size = 4096,\
+	.oob_size = 128,\
+	.eraseblock_size = 0x40000,\
+	.block_cnt = 4096\
+};
+#else
+struct image_info q654_image_info = {\
+	.page_size = 2048,\
+	.oob_size = 64,\
+	.eraseblock_size = 0x20000,\
+	.block_cnt = 2048\
+};
+#endif
+
 struct partition_info_s partition_info[NUM_OF_PARTITION];
 
 struct BootProfileHeader
@@ -145,13 +164,14 @@ int compose_header(struct BootProfileHeader *hdr)
 	// 16
 	hdr->BchType       = 0xff; // BCH OFF
 	//hdr->addrCycle     = sp_get_addr_cycle(nand);
-	hdr->ReduntSize    = 64;
-	hdr->BlockNum      = 2048;
+
+	hdr->ReduntSize    = q654_image_info.oob_size;
+	hdr->BlockNum      = q654_image_info.block_cnt;
 	hdr->BadBlockNum   = 0; //TODO
-	hdr->PagePerBlock  = 64;
+	hdr->PagePerBlock  = q654_image_info.eraseblock_size / q654_image_info.page_size;
 
 	// 32
-	hdr->PageSize      = 2048;
+	hdr->PageSize      = q654_image_info.page_size;
 
 	#ifdef CONFIG_SP_SPINAND
 	//hdr->PlaneSelectMode = sinfo->plane_sel_mode;
@@ -159,8 +179,8 @@ int compose_header(struct BootProfileHeader *hdr)
 	#endif
 
 	// 48
-	hdr->xboot_copies  = 2;                                 // assume xboot has 2 copies
-	hdr->xboot_pg_off  = 64;                 		// assume xboot is at block 1
+	hdr->xboot_copies  = 1;                                 // assume xboot has 2 copies
+	hdr->xboot_pg_off  = q654_image_info.eraseblock_size / q654_image_info.page_size; // assume xboot is at block 1
 	hdr->xboot_pg_cnt  = partition_info[IDX_PARTITION_XBOOT1].file_size; 	// assume xboot size=32KB
 	//hdr->xboot_pg_cnt = 2;
 	//reserved60
@@ -173,10 +193,10 @@ int compose_header(struct BootProfileHeader *hdr)
 	//80
 	//struct OptBootEntry16 opt_entry[10];
 #ifdef CONFIG_PNAND
-	hdr->AC_Timing0 = 0x02020204;
-	hdr->AC_Timing1 = 0x00001401;
-	hdr->AC_Timing2 = 0x0c140414;
-	hdr->AC_Timing3 = 0x00040014;
+	hdr->AC_Timing0 = 0x0f1f0f1f;
+	hdr->AC_Timing1 = 0x00007f7f;//bit 16 tRLAT
+	hdr->AC_Timing2 = 0x7f7f7f7f;
+	hdr->AC_Timing3 = 0xff1f001f;
 #endif
 	//reserved96[40]
 
@@ -256,18 +276,19 @@ static int write_page(const struct image_info *info, uint8_t *buffer,
 
 		one_copy_size = info->ecc_step_size;
 
-#ifdef CONFIG_BI //Consider the BBM
-		if(info->usable_page_size == info->page_size) {//for FTNANDC BI function
-			/* the part of the last sector data in data region is sec_1st,
-			 * the part of the last sector data in spare region is sec_2nd.
-			 */
+#ifdef CONFIG_BI //Consider the BBM, for FTNANDC BI function
+		if ((info->usable_page_size == info->page_size) && (i == (steps - 1))) {
+		/* the part of the last sector data(include parity data) in data region is sec_1st,
+		 * the part of the last sector data(include parity data) in spare region is sec_2nd.
+		 */
 			int sec_2nd = i * eccbytes;
 			int sec_1st = info->ecc_step_size - i * eccbytes;
 			u8 * temp_for_BI = malloc(info->oob_size); // must be larger than sec_2nd size
 
 			memset(temp_for_BI, 0xff, info->oob_size);
 			memcpy(temp_for_BI + info->BI_bytes, buffer + sec_1st, sec_2nd);
-			memcpy(buffer + sec_1st, temp_for_BI, sec_2nd + info->BI_bytes);
+	/* FIX: here I don't think about the case that (eccbytes *(step-1) <BI_bytes) */
+			memcpy(buffer + sec_1st, temp_for_BI, info->BI_bytes + sec_2nd);
 
 			free(temp_for_BI);
 
@@ -278,6 +299,7 @@ static int write_page(const struct image_info *info, uint8_t *buffer,
 		data_offs = i * (info->ecc_step_size + eccbytes);
 		ecc_offs = data_offs + one_copy_size;
 
+		/* write the last sector of the page into image */
 		fseek(dst, pos + data_offs, SEEK_SET);
 		fwrite(buffer, one_copy_size, 1, dst);
 		fseek(dst, pos + ecc_offs, SEEK_SET);
@@ -290,19 +312,19 @@ static int write_page(const struct image_info *info, uint8_t *buffer,
 	return 0;
 }
 
-/* every four pages contains one header
+/* every four pages(2k) contains one header
 	 * total of 16 backups
 	 * -------------------
-	 * |Header page (#0) |
-	 * |reserved page    |
-	 * |reserved page    |
-	 * |reserved page    |
-	 * |Header page (#1) |
-	 * |reserved page    |
-	 * |reserved page    |
-	 * |reserved page    |
+	 * |Header page (#0) |-|
+	 * |reserved page    | |
+	 * |reserved page    | |-8192 bytes(not include spare size)
+	 * |reserved page    | | = 4 * 2k page = 2 * 4k page = 1 * 8k page
+	 * |Header page (#1) |-|
+	 * |reserved page    |  The default Page size is 2KB for reading header in iboot.
+	 * |reserved page    |  And every four pages(2kB) read one header.So ensure the
+	 * |reserved page    |  correct size between the headers when pack header.
 	 * |	...          |
-	 * |Header page (#15)|
+	 * |Header page (#7) |
 	 * |reserved page    |
 	 * |reserved page    |
 	 * |reserved page    |
@@ -316,8 +338,8 @@ static int write_header(const struct image_info *info, uint8_t *buffer, FILE *ds
 
 	ecc = buffer + info->ecc_step_size;//parity data start with 1KB in page offset
 
-	for (int i = 0; i < 16; i++) {
-		for (int j = 0; j < 4; j++) {
+	for (int i = 0; i < info->eraseblock_size/8192; i++) {
+		for (int j = 0; j < 8192/info->page_size; j++) {
 
 			memset(buffer, 0xff, info->page_size + info->oob_size);
 
@@ -348,33 +370,57 @@ int build_image(void)
 	u8 *ecc;//temporarily store one ecc data
 	off_t page;
 	off_t header_pos;
-	off_t pos;
 	struct BootProfileHeader hdr;
 	struct bch_control *bch;
 	u32 page_cnt, use_cnt, copies;
-
-	/* Init bch */
-	//xt_debug("init bch\n");
-	bch = init_bch(BCH_GF_ORDER_M, q654_image_info.ecc_strength, BCH_PRIMITIVE_POLY);
+	int steps, eccbytes;
 
 	/* Create the buffer */
 	buffer = malloc(q654_image_info.page_size + q654_image_info.oob_size);
-	//ecc = buffer + page_size_2kbyte / 2;
+
+	/* Create the image */
 	dst = fopen(dst_name, "wb");
 	if (dst == NULL) {
 		printf("Error: Can't open %s\n", dst_name);
 		exit(-1);
 	}
 
-	/* init and write header */
-	//xt_debug("init header\n");
-	compose_header(&hdr);
-	write_header(&q654_image_info, buffer, dst, &hdr, bch);
-
 	/* Write each part */
-	page_cnt = q654_image_info.eraseblock_size / q654_image_info.page_size;
+	for (int i = -1; i < NUM_OF_PARTITION; i++) {//
 
-	for (int i = 0; i < NUM_OF_PARTITION; i++) {//
+		/*==========================CONFIG BCH======================*/
+		/* config bch 1k60bit once when write header.
+		 *	1k60bit is used for header, xboot, uboot.
+		 * config bch 512/2bit once when write kernel.
+		 *	512/2bit is used for kernel/rootfs
+		 */
+	 	if ((i == -1) || (i == 6)) {
+			if (i == -1) {
+				q654_image_info.ecc_strength = 60;
+				q654_image_info.ecc_step_size = 1024;
+			}
+			else if (i == 6) {
+				q654_image_info.ecc_strength = 2;
+				q654_image_info.ecc_step_size = 512;
+
+			}
+			bch = init_bch(BCH_GF_ORDER_M, q654_image_info.ecc_strength, BCH_PRIMITIVE_POLY);
+
+			eccbytes = DIV_ROUND_UP(q654_image_info.ecc_strength * 14, 8);
+			steps = (q654_image_info.page_size + q654_image_info.oob_size) \
+				/ (q654_image_info.ecc_step_size + eccbytes);
+
+			q654_image_info.usable_page_size = steps * q654_image_info.ecc_step_size;
+	 	}
+		/*==========================CONFIG BCH======================*/
+
+		/* init and write header */
+		if (i == -1) {
+			//xt_debug("init header\n");
+			compose_header(&hdr);
+			write_header(&q654_image_info, buffer, dst, &hdr, bch);
+			continue;
+		}
 
 		/* Set the write postion of each part */
 		fseek(dst, partition_info[i].partition_start_addr, SEEK_SET);
@@ -389,15 +435,6 @@ int build_image(void)
 			continue;
 		}
 
-		/* 2 bit correction capatity per 512 bytes (rootfs/kernel/...) */
-		if (i > 5) {
-			q654_image_info.usable_page_size= 2048;
-			q654_image_info.ecc_strength = 2;
-			q654_image_info.ecc_step_size = 512;
-
-			bch = init_bch(BCH_GF_ORDER_M, q654_image_info.ecc_strength, BCH_PRIMITIVE_POLY);
-		}
-
 		src = fopen(partition_info[i].file_name, "r");
 		if (src == NULL) {
 			printf("Error: Can't open %s\n", partition_info[i].file_name);
@@ -408,6 +445,7 @@ int build_image(void)
 		 * is valid when the size of xboot.img is smaller than usable_block_size(64KB).
 		 * after Q628, xboot.img compose of xboot and dram data(>64KB). So copies not use?
 		 */
+		page_cnt = q654_image_info.eraseblock_size / q654_image_info.page_size;
 		use_cnt = partition_info[i].file_size / q654_image_info.usable_page_size;
 		copies = page_cnt / use_cnt;
 		if(copies == 0) // uboot roofs kernel
@@ -429,6 +467,16 @@ int build_image(void)
 
 		fclose(src);
 	}
+#if 0
+	printf("----------------------------\n");
+	printf("TEST read spare, 2048+64 bytes pad 0xff\n");
+	printf("----------------------------\n");
+	fseek(dst, partition_info[0].partition_start_addr, SEEK_SET);
+
+	memset(buffer, 0xff, q654_image_info.page_size + q654_image_info.oob_size);
+	fwrite(buffer, q654_image_info.page_size + q654_image_info.oob_size, 1, dst);
+#endif
+	free(buffer);
 	fclose(dst);
 	return 1;
 }
@@ -449,9 +497,9 @@ void set_partition_info(void)
 #else
 	u8 *file_name[] = {"nand_1k.bin"};
 #endif
-	next_offs = 0x21000;//after header
 	page_per_blk = q654_image_info.eraseblock_size / q654_image_info.page_size;
 	file_blk_sz = (q654_image_info.page_size + q654_image_info.oob_size) * page_per_blk;
+	next_offs = file_blk_sz;//after header
 
 	for (i = 0; i < NUM_OF_PARTITION; i++) {
 		/* set file_name for each part */
@@ -526,21 +574,11 @@ void set_partition_info(void)
 
 int main()
 {
-	/* image info config */
-	q654_image_info.page_size	= 2048;
-	q654_image_info.oob_size	= 64;
-	q654_image_info.eraseblock_size = 0x20000;//128KB
 #ifdef CONFIG_BI
 	q654_image_info.BI_bytes	= 2;
 #else
 	q654_image_info.BI_bytes	= 0;
 #endif
-	/* 1k60bit is used for header, xboot, uboot. Ecc(512byte 1bit)
-	 *  will set up again before writing page of kernel/rootfs.
-	 */
-	q654_image_info.usable_page_size= 1024;
-	q654_image_info.ecc_strength	= 60;
-	q654_image_info.ecc_step_size	= 1024;
 
 	set_partition_info();
 

@@ -104,6 +104,16 @@ pnand_hex:
 	@echo "* Gen zebu PNAND hex $(PNAND_HEX) ..."
 	@hexdump -v -e '1/1 "%02x\n"' $(PNAND_IMAGE) > $(PNAND_HEX)
 	@ls -l $(PNAND_HEX)
+# The 4KB page device design itself determines the hex file format
+pnand_hex_4k:
+	@make -C $(PNAND_TOOL) all
+	@if [ ! -f $(PNAND_IMAGE) ]; then \
+		echo "No input : $(PNAND_IMAGE)" ; \
+		exit 1 ; \
+	fi
+	@echo "* Gen zebu PNAND hex $(PNAND_HEX) ..."
+	@hexdump -v -e '1/4 "%08x\n"' $(PNAND_IMAGE) > $(PNAND_HEX)
+	@ls -l $(PNAND_HEX)
 
 ###############################
 # Pack for emmc boot testing

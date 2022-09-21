@@ -4,6 +4,7 @@ XBOOT = $(TOPDIR)/../../../boot/xboot/bin/xboot.img
 UBOOT = $(TOPDIR)/../../../boot/uboot/u-boot.img
 DTB = $(TOPDIR)/../../../linux/kernel/dtb
 KERNEL = $(TOPDIR)/../../../linux/kernel/arch/arm64/boot/uImage
+ROOTFS = $(TOPDIR)/../../../linux/rootfs/rootfs.img
 
 PNAND_IMG = pnand.img
 PNAND_ERR = pnand_err.img
@@ -34,6 +35,7 @@ cp_bin:
 	@cp $(UBOOT) uboot2
 	@cp $(DTB) dtb
 	@cp $(KERNEL) kernel
+	@cp $(ROOTFS) rootfs
 
 err_bit: random_error_bit.o
 	@cp $(PNAND_IMG) $(PNAND_ERR)

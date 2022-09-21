@@ -179,9 +179,11 @@ int compose_header(struct BootProfileHeader *hdr)
 	#endif
 
 	// 48
-	hdr->xboot_copies  = 1;                                 // assume xboot has 2 copies
-	hdr->xboot_pg_off  = q654_image_info.eraseblock_size / q654_image_info.page_size; // assume xboot is at block 1
-	hdr->xboot_pg_cnt  = partition_info[IDX_PARTITION_XBOOT1].file_size; 	// assume xboot size=32KB
+	hdr->xboot_copies  = 1;
+	hdr->xboot_pg_off  = q654_image_info.eraseblock_size / \
+			     q654_image_info.page_size; // assume xboot is at block 1
+	hdr->xboot_pg_cnt  = partition_info[IDX_PARTITION_XBOOT1].file_size / \
+			     q654_image_info.usable_page_size;
 	//hdr->xboot_pg_cnt = 2;
 	//reserved60
 

@@ -22,12 +22,14 @@ DEPS = $(OBJS:.o=.d)
 .PHONY : all clean cp_bin gen_img run err_bit
 
 all:
-	make cp_bin
-	make gen_img
-	make run
+	@make cp_bin
+	@make gen_img
+	@make run
 
 run: gen_img
-	./gen_img
+	@tr '\000' '\377' < /dev/zero | dd iflag=fullblock of=pnand.img bs=1M count=264
+	@./gen_img
+	@split -b 256M $(PNAND_IMG)
 
 cp_bin:
 	@cp $(XBOOT) xboot1

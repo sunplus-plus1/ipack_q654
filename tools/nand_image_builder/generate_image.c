@@ -381,7 +381,7 @@ int build_image(void)
 	buffer = malloc(q654_image_info.page_size + q654_image_info.oob_size);
 
 	/* Create the image */
-	dst = fopen(dst_name, "wb");
+	dst = fopen(dst_name, "r+b");
 	if (dst == NULL) {
 		printf("Error: Can't open %s\n", dst_name);
 		exit(-1);

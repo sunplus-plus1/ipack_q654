@@ -93,18 +93,31 @@ nand_hex:
 ###############################
 # Pack for Parallel-NAND boot testing
 PNAND_TOOL=tools/nand_image_builder
-PNAND_IMAGE=$(PNAND_TOOL)/pnand.img
-PNAND_HEX=nand/pnand.hex
+PNAND_IMAGE0=$(PNAND_TOOL)/xaa
+PNAND_IMAGE1=$(PNAND_TOOL)/xab
+PNAND_HEX0=nand/pnand0.hex
+PNAND_HEX1=nand/pnand1.hex
 pnand_hex:
 	@make -C $(PNAND_TOOL) all
-	@if [ ! -f $(PNAND_IMAGE) ]; then \
-		echo "No input : $(PNAND_IMAGE)" ; \
+	@if [ ! -f $(PNAND_IMAGE0) ]; then \
+		echo "No input : $(PNAND_IMAGE0)" ; \
 		exit 1 ; \
 	fi
-	@echo "* Gen zebu PNAND hex $(PNAND_HEX) ..."
-	@hexdump -v -e '1/1 "%02x\n"' $(PNAND_IMAGE) > $(PNAND_HEX)
-	@ls -l $(PNAND_HEX)
+	@echo "* Gen zebu PNAND hex $(PNAND_HEX0) ..."
+	@hexdump -v -e '1/1 "%02x\n"' $(PNAND_IMAGE0) > $(PNAND_HEX0)
+	@if [ ! -f $(PNAND_IMAGE1) ]; then \
+		echo "No input : $(PNAND_IMAGE1)" ; \
+		exit 1 ; \
+	fi
+	@echo "* Gen zebu PNAND hex $(PNAND_HEX1) ..."
+	@hexdump -v -e '1/1 "%02x\n"' $(PNAND_IMAGE1) > $(PNAND_HEX1)
+	@ls -l $(PNAND_HEX0)
+	@ls -l $(PNAND_HEX1)
+
 # The 4KB page device design itself determines the hex file format
+# FIXME: not consider the 512MB+16MB hex file, refer to 2KB.
+PNAND_IMAGE=$(PNAND_TOOL)/pnand.img
+PNAND_HEX=nand/pnand.hex
 pnand_hex_4k:
 	@make -C $(PNAND_TOOL) all
 	@if [ ! -f $(PNAND_IMAGE) ]; then \

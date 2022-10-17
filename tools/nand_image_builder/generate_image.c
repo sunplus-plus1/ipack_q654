@@ -8,36 +8,48 @@
 
 #include "include/bch.h"
 
-/* TEST_PAGE_4K */
+/* Select page size to test */
 //#define TEST_PAGE_4K
+//#define TEST_PAGE_8K
+
+/* Avoid configuration conflicts */
+#ifdef TEST_PAGE_8K
+#undef TEST_PAGE_4K
+#endif
+
+#ifdef TEST_PAGE_4K
+#undef TEST_PAGE_8K
+#endif
+
 /* PNAND actiming */
 #define CONFIG_PNAND
-/* Consider the BBM */
+
+/* Enable the BBM(Bad Block Management) function */
 #undef CONFIG_BI
 
-#if 1
+#define DEBUG_BUILD_IMG
+#ifdef DEBUG_BUILD_IMG
 #define xt_debug(format, ...)	printf("[%s:%d] "format"", __FUNCTION__, __LINE__, ##__VA_ARGS__)
 #else
 #define xt_debug(format, ...)
 #endif
 
-#define BCH_PRIMITIVE_POLY	0x4443
-//#define BCH_PRIMITIVE_POLY	0x600D
+#define BCH_PRIMITIVE_POLY	0x4443 //0x600D
 
 #define BCH_GF_ORDER_M		14
 
-#define BHDR_BEG_SIGNATURE 0x52444842  // BHDR
-#define BHDR_END_SIGNATURE 0x444e4548  // HEND
+#define BHDR_BEG_SIGNATURE	0x52444842  // BHDR
+#define BHDR_END_SIGNATURE	0x444e4548  // HEND
 
 #define DIV_ROUND_UP(n,d)	(((n) + (d) - 1) / (d))
-#define ALIGN_TO_16B(X)      ((X + ((1 << 4) - 1)) & (0xFFFFFFFF - ((1 << 4) - 1)))
+#define ALIGN_TO_16B(X)		((X + ((1 << 4) - 1)) & (0xFFFFFFFF - ((1 << 4) - 1)))
 
-#define SIZE_FILE_NAME 32
-#define NUM_OF_PARTITION 9
+#define SIZE_FILE_NAME		32
+#define NUM_OF_PARTITION	8
 
-#define IDX_PARTITION_XBOOT1            (0)
-#define IDX_PARTITION_UBOOT1            (1)
-#define IDX_PARTITION_UBOOT2            (2)
+#define IDX_PARTITION_XBOOT1	(0)
+#define IDX_PARTITION_UBOOT1	(1)
+#define IDX_PARTITION_UBOOT2	(2)
 
 typedef unsigned char u8;
 typedef unsigned int  u32;
@@ -64,7 +76,14 @@ struct image_info {
 	u32 usable_page_size;
 };
 
-#ifdef TEST_PAGE_4K
+#ifdef TEST_PAGE_8K
+struct image_info q654_image_info = {\
+	.page_size = 8192,\
+	.oob_size = 640,\
+	.eraseblock_size = 0x100000,\
+	.block_cnt = 4096\
+};
+#elif defined TEST_PAGE_4K
 struct image_info q654_image_info = {\
 	.page_size = 4096,\
 	.oob_size = 128,\
@@ -380,8 +399,9 @@ int build_image(void)
 	/* Create the buffer */
 	buffer = malloc(q654_image_info.page_size + q654_image_info.oob_size);
 
-	/* Create the image */
+	/* Create the image with cmd 'dd' in Makefile, only open the file here */
 	dst = fopen(dst_name, "r+b");
+	//dst = fopen(dst_name, "wb");
 	if (dst == NULL) {
 		printf("Error: Can't open %s\n", dst_name);
 		exit(-1);

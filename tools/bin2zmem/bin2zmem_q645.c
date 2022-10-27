@@ -44,9 +44,9 @@ static void usage(void)
 /**############### DDR4 controller ###################*/
 
 #define ADDRMAP0    0x00000016  
-#define ADDRMAP1    0x00080202 
-#define ADDRMAP2    0x02020000 
-#define ADDRMAP3    0x02020202 
+#define ADDRMAP1    0x00080808 
+#define ADDRMAP2    0x00000000 
+#define ADDRMAP3    0x00000000 
 #define ADDRMAP4    0x00001f1f 
 #define ADDRMAP5    0x070f0707 
 #define ADDRMAP6    0x08070707

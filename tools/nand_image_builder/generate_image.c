@@ -45,7 +45,7 @@
 #define ALIGN_TO_16B(X)		((X + ((1 << 4) - 1)) & (0xFFFFFFFF - ((1 << 4) - 1)))
 
 #define SIZE_FILE_NAME		32
-#define NUM_OF_PARTITION	8
+#define NUM_OF_PARTITION	9
 
 #define IDX_PARTITION_XBOOT1	(0)
 #define IDX_PARTITION_UBOOT1	(1)

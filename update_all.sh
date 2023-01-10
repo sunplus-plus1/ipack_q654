@@ -124,7 +124,9 @@ else
 		elif [ "$CHIP" = "SP7350" ]; then
 			aarch64-none-linux-gnu-objcopy -O binary -S bin/$VMLINUX bin/$VMLINUX.bin
 			./add_uhdr.sh linux-`date +%Y%m%d-%H%M%S` bin/$VMLINUX.bin bin/$LINUX $ARCH 0x800000 0x800000 kernel
-			[ "$SECURE" = "1" ] && make -C ../boot/uboot/board/sunplus/common/secure_sp7350 sign IMG=$(realpath bin/$LINUX)
+			if [ "$SECURE" = "1" ]; then
+				make -C ../boot/uboot/board/sunplus/common/secure_sp7350 sign IMG=$(realpath bin/$LINUX) || exit 1
+			fi
 		fi
 	fi
 fi

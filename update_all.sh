@@ -51,10 +51,11 @@ warn_up_ok()
 BOOTROM=bootRom.bin
 XBOOT=xboot.img
 UBOOT=u-boot.img
+FIP=fip.img
 NONOS=rom.img
 ROOTFS=rootfs.img
 LINUX=uImage
-BL31=bl31.img
+
 if [ "$CHIP" = "Q645" -o "$CHIP" = "SP7350" ]; then
 	kernel_max_size=$((0xde0000))
 else
@@ -151,7 +152,7 @@ if [ "$ARCH" = "riscv" ]; then
 fi
 
 if [ "$CHIP" = "Q645" -o "$CHIP" = "SP7350" ]; then
-	./update_me.sh ../boot/trusted-firmware-a/build/$BL31  && warn_up_ok $BL31
+	./update_me.sh ../boot/trusted-firmware-a/build/$FIP && warn_up_ok $FIP
 fi
 
 echo "* Check image..."
@@ -185,6 +186,7 @@ if [ "$ZEBU_RUN" = "0" ]; then
 		dd if=bin/$XBOOT  of=bin/$IMG_OUT conv=notrunc bs=1k seek=96
 		dd if=bin/dtb.img of=bin/$IMG_OUT conv=notrunc bs=1k seek=288
 		dd if=bin/$UBOOT  of=bin/$IMG_OUT conv=notrunc bs=1k seek=416
+		dd if=bin/$FIP    of=bin/$IMG_OUT conv=notrunc bs=1k seek=1536
 	else
 		dd if=bin/$XBOOT  of=bin/$IMG_OUT conv=notrunc bs=1k seek=64
 		dd if=bin/dtb.img of=bin/$IMG_OUT conv=notrunc bs=1k seek=128
@@ -277,10 +279,12 @@ else
 		#B2ZMEM=./tools/bin2zmem/bin2zmem_ddr4.sh
 		B2ZMEM=./tools/bin2zmem/bin2zmem_q645
 		M4=../firmware/arduino_core_sunplus/bin/firmware.bin
+		OPTEE=../optee/optee_os/out/arm/core/tee-pager_v2.bin
+		BL31=../boot/trusted-firmware-a/build/bl31.bin
 		DXTOR=1
-		$B2ZMEM  bin/$XBOOT       $ZMEM_HEX     0x0       0x0001000             $DXTOR # 4KB
-		$B2ZMEM  bin/$BL31        $ZMEM_HEX     0x0       $((0x0200000 - 0x40)) $DXTOR # 2MB - 64
-		$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       $((0x0300000 - 0x40)) $DXTOR # 3MB - 64 (uboot before relocation)
+		$B2ZMEM  $BL31            $ZMEM_HEX     0x0       0x200000              $DXTOR # 2MB
+		$B2ZMEM  $OPTEE           $ZMEM_HEX     0x0       0x300000              $DXTOR # 3MB
+		$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x0500000             $DXTOR # 5MB4 (uboot before relocation)
 		$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x1f80000 - 0x40)) $DXTOR # 31MB + 512KB - 64
 		$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x2000000 - 0x40)) $DXTOR # 32MB - 64
 		$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       $((0xff00000 - 0x40)) $DXTOR # 255MB - 64 (uboot after relocation)

@@ -147,6 +147,9 @@ emmc_hex:
 	@if [ "$(CHIP)" = "I143" ]; then \
 		dd if=../out/freertos.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x1822) >/dev/null 2>&1 ; \
 	fi;
+	@if [ "$(CHIP)" = "Q645" -o "$(CHIP)" = "SP7350" ]; then \
+		dd if=../out/fip.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x1022) >/dev/null 2>&1 ; \
+	fi;
 	@dd if=../out/dtb of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x2022) >/dev/null 2>&1
 	@dd if=../out/uImage of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x2222) >/dev/null 2>&1
 	@dd if=../out/rootfs.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x12222) >/dev/null 2>&1

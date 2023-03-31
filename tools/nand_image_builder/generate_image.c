@@ -514,8 +514,8 @@ void set_partition_info(void)
 	u32 page_per_blk; //page cnt of one block
 	u32 file_blk_sz; //The block size in file
 #if 1
-	u8 *file_name[] = {"xboot1", "uboot1", "uboot2", "env", "env_redund",\
-		"reserve", "dtb", "kernel", "rootfs"};
+	u8 *file_name[] = {"xboot1", "uboot1", "uboot2","fip", "env", "env_redund",\
+		 "dtb", "kernel", "rootfs"};
 #else
 	u8 *file_name[] = {"nand_1k.bin"};
 #endif
@@ -571,15 +571,15 @@ void set_partition_info(void)
 		 * xboot1	  0x20000	   384//0x60000
 		 * uboot1	  0x80000	  1536//0x180000
 		 * uboot2	  0x200000	  2048//0x200000
-		 * env		  0x400000	   512//0x80000
-		 * env_redund	  0x480000	   512//0x80000
-		 * reserve/nonos  0x500000	  1024//0x100000
-		 * dtb		  0x600000	   256//0x40000
-		 * kernel	  0x640000	 25600//0x1900000
+		 * reserve/nonos  0x400000	  1024//0x200000
+		 * env		  0x600000	   512//0x80000
+		 * env_redund	  0x680000	   512//0x80000
+		 * dtb		  0x700000	   256//0x40000
+		 * kernel	  0x840000	 25600//0x1900000
 		 * rootfs	  0x1f40000	 33536//0x1f40000          230144//0xe0c0000
 		 */
-		u32 part_size[9] = {0x60000, 0x180000, 0x200000, 0x80000, 0x80000,\
-				0x100000, 0x40000, 0x1900000, 0x1f40000};
+		u32 part_size[9] = {0x60000, 0x180000, 0x200000,0x200000, 0x80000, 0x80000,\
+				 0x40000, 0x1900000, 0x1f40000};
 
 		block_cnt = DIV_ROUND_UP(part_size[i], q654_image_info.eraseblock_size);
 #endif

@@ -2,7 +2,7 @@ TOPDIR = $(abspath .)
 
 XBOOT = $(TOPDIR)/../../../boot/xboot/bin/xboot.img
 UBOOT = $(TOPDIR)/../../../boot/uboot/u-boot.img
-FIP = $(TOPDIR)/../../../ boot/trusted-firmware-a/build/fip.img
+FIP = $(TOPDIR)/../../../boot/trusted-firmware-a/build/fip.img
 DTB = $(TOPDIR)/../../../linux/kernel/dtb
 KERNEL = $(TOPDIR)/../../../linux/kernel/arch/arm64/boot/uImage
 ROOTFS = $(TOPDIR)/../../../linux/rootfs/rootfs.img

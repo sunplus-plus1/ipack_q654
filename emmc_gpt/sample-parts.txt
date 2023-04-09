@@ -1,4 +1,4 @@
-=> setenv partitions "uuid_disk=00042021-0408-4601-9dcc-a8c51255994f;name=uboot1,uuid=77877125-add0-4374-9e60-02cb591c9737,size=1MiB;name=uboot2,uuid=b4b84b8a-04e3-48ae-8536-aff5c9c495b1,size=1MiB;name=env,uuid=35219908-c613-4b08-9322-3391ff571e19,size=512KiB;name=env_redund,uuid=8e123a33-e3d3-4db9-92f4-d3ebd9b3224f,size=512KiB;name=nonos,uuid=02a90af2-5d1c-4a29-9177-97a513e3cae4,size=1MiB;name=dtb,uuid=3d5088db-a534-413e-836d-c757cb682814,size=256KiB;name=kernel,uuid=03332b01-ac34-4d28-99b4-34e03a2335f4,size=32MiB;name=rootfs,uuid=cf2eecfa-4485-41e2-b19d-757e796da607,size=48MiB;"
+=> setenv partitions "uuid_disk=00042021-0408-4601-9dcc-a8c51255994f;name=uboot1,uuid=77877125-add0-4374-9e60-02cb591c9737,size=1MiB;name=uboot2,uuid=b4b84b8a-04e3-48ae-8536-aff5c9c495b1,size=1MiB;name=fip,uuid=02a90af2-5d1c-4a29-9177-97a513e3cae4,size=1MiB;name=env,uuid=35219908-c613-4b08-9322-3391ff571e19,size=512KiB;name=env_redund,uuid=8e123a33-e3d3-4db9-92f4-d3ebd9b3224f,size=512KiB;name=dtb,uuid=3d5088db-a534-413e-836d-c757cb682814,size=256KiB;name=kernel,uuid=03332b01-ac34-4d28-99b4-34e03a2335f4,size=32MiB;name=rootfs,uuid=cf2eecfa-4485-41e2-b19d-757e796da607,size=48MiB;"
 =>
 => gpt write mmc 0 $partitions
 Writing GPT: success!
@@ -21,18 +21,18 @@ Part    Start LBA       End LBA         Name
         attrs:  0x0000000000000000
         type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
         guid:   b4b84b8a-04e3-48ae-8536-aff5c9c495b1
-  3     0x00001022      0x00001421      "env"
-        attrs:  0x0000000000000000
-        type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
-        guid:   35219908-c613-4b08-9322-3391ff571e19
-  4     0x00001422      0x00001821      "env_redund"
-        attrs:  0x0000000000000000
-        type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
-        guid:   8e123a33-e3d3-4db9-92f4-d3ebd9b3224f
-  5     0x00001822      0x00002021      "nonos"
+  3     0x00001022      0x00001821      "fip"
         attrs:  0x0000000000000000
         type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
         guid:   02a90af2-5d1c-4a29-9177-97a513e3cae4
+  4     0x00001822      0x00001c21      "env"
+        attrs:  0x0000000000000000
+        type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
+        guid:   35219908-c613-4b08-9322-3391ff571e19
+  5     0x00001c22      0x00002021      "env_redund"
+        attrs:  0x0000000000000000
+        type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
+        guid:   8e123a33-e3d3-4db9-92f4-d3ebd9b3224f
   6     0x00002022      0x00002221      "dtb"
         attrs:  0x0000000000000000
         type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
@@ -45,6 +45,7 @@ Part    Start LBA       End LBA         Name
         attrs:  0x0000000000000000
         type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
         guid:   cf2eecfa-4485-41e2-b19d-757e796da607
+
 =>
 => mmc dev 0
 switch to partitions #0, OK
@@ -55,5 +56,5 @@ mmc0(part 0) is current device
 MMC read: dev # 0, block # 0, count 16 ... 16 blocks read: OK
 =>
 => fatwrite usb 0 1000000 emmc_gpt.bin 2000
-8192 bytes written
+8192 bytes written in 64 ms (125 KiB/s)
 =>

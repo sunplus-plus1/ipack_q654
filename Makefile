@@ -11,6 +11,9 @@ ZEBU_RUN ?= 0
 BOOT_KERNEL_FROM_TFTP ?= 0
 TFTP_SERVER_PATH ?= 0
 CHIP ?= Q628
+ifeq ($(CHIP),Q654)
+CHIP=SP7350
+endif
 ARCH ?= arm
 ifeq ($(CHIP),Q645)
 ARCH=arm64

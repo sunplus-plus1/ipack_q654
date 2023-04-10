@@ -287,7 +287,7 @@ else
 		$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x0500000             $DXTOR # 5MB4 (uboot before relocation)
 		$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x1f80000 - 0x40)) $DXTOR # 31MB + 512KB - 64
 		$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x2000000 - 0x40)) $DXTOR # 32MB - 64
-		$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       $((0xff00000 - 0x40)) $DXTOR # 255MB - 64 (uboot after relocation)
+		$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0xff00000             $DXTOR # 255MB - 64 (uboot after relocation)
 		$B2ZMEM  $M4              $ZMEM_HEX     0x0       0x77000000            $DXTOR
 		zmem_kernel_max_size=$((0xdf00000))
 	elif [ "$CHIP" == "Q628" ]; then

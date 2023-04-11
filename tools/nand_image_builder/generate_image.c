@@ -448,7 +448,7 @@ int build_image(void)
 		fseek(dst, partition_info[i].partition_start_addr, SEEK_SET);
 
 		/* skip env,env_redunt,nonos, pad 0xff */
-		if ((i > 2) && (i < 6)) {
+		if ((i > 3) && (i < 6)) {
 			while (ftell(dst) < partition_info[i].partition_start_addr +
 			       partition_info[i].partition_size) {
 				memset(buffer, 0xff, q654_image_info.page_size + q654_image_info.oob_size);
@@ -535,13 +535,12 @@ void set_partition_info(void)
 		xt_debug("Start address:\t0x%x\n", partition_info[i].partition_start_addr);
 
 		/* skip env, env_redund, reserve, the file not exist temporary */
-		if ((i < 3) || (i > 5)) {
+		if ((i < 4) || (i > 5)) {
 			/* get the src file stat */
 			if (stat(partition_info[i].file_name, &file_stat) != 0) {
 				printf("File not found: %s\n", partition_info[i].file_name);
 				exit (-1);
 			}
-
 			/* set file_size and align it to usable_page_size(1k) */
 			u64_temp = file_stat.st_size;
 			u64_temp = (u64_temp + 0x3ff) & 0xfffffffffffffc00UL;
@@ -553,7 +552,8 @@ void set_partition_info(void)
 
 #ifdef AUTO_LAYOUT_ONE_BY_ONE//only used for xboot/uboot. do not implement kernel rootfs.
 			/* cal the block_cnt that the partition used */
-			if (i < 3) {
+			if (i < 4) {
+				printf("%d %d \n",q654_image_info.usable_page_size , q654_image_info.page_size);
 				u64_temp = u64_temp / q654_image_info.usable_page_size * q654_image_info.page_size; // u64_temp*2
 			}
 			block_cnt = DIV_ROUND_UP(u64_temp, q654_image_info.eraseblock_size);
@@ -578,7 +578,7 @@ void set_partition_info(void)
 		 * kernel	  0x840000	 25600//0x1900000
 		 * rootfs	  0x1f40000	 33536//0x1f40000          230144//0xe0c0000
 		 */
-		u32 part_size[9] = {0x60000, 0x180000, 0x200000,0x200000, 0x80000, 0x80000,\
+		u32 part_size[9] = {0x60000, 0x160000, 0x220000,0x200000, 0x80000, 0x80000,\
 				 0x40000, 0x1900000, 0x1f40000};
 
 		block_cnt = DIV_ROUND_UP(part_size[i], q654_image_info.eraseblock_size);

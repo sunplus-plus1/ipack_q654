@@ -279,12 +279,10 @@ else
 		#B2ZMEM=./tools/bin2zmem/bin2zmem_ddr4.sh
 		B2ZMEM=./tools/bin2zmem/bin2zmem_q645
 		M4=../firmware/arduino_core_sunplus/bin/firmware.bin
-		OPTEE=../optee/optee_os/out/arm/core/tee-pager_v2.bin
-		BL31=../boot/trusted-firmware-a/build/bl31.bin
+
 		DXTOR=1
-		$B2ZMEM  $BL31            $ZMEM_HEX     0x0       0x200000              $DXTOR # 2MB
-		$B2ZMEM  $OPTEE           $ZMEM_HEX     0x0       0x300000              $DXTOR # 3MB
-		$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x0500000             $DXTOR # 5MB (uboot before relocation)
+		$B2ZMEM  bin/$FIP         $ZMEM_HEX     0x0       0x1000000             $DXTOR # 16MB (fip load address)
+		$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0x0500000             $DXTOR # 5MB  (uboot before relocation)
 		$B2ZMEM  bin/dtb.img      $ZMEM_HEX     0x0       $((0x1f80000 - 0x40)) $DXTOR # 31MB + 512KB - 64
 		$B2ZMEM  bin/$LINUX       $ZMEM_HEX     0x0       $((0x2000000 - 0x40)) $DXTOR # 32MB - 64
 		$B2ZMEM  bin/$UBOOT       $ZMEM_HEX     0x0       0xff00000             $DXTOR # 255MB (uboot after relocation)

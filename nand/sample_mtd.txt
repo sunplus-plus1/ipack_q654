@@ -1,9 +1,5 @@
 http://wiki2.sunplus.com/dvdsa/index.php/Q628/Q628_iBoot_Emulation_Run#Update_Zebu_SPI_NAND_hex
 
-Replace 8388 mtd xboot1, uboot2 (optional uboot1) with q628's.
-
-8388 mtd:
-
 => mtdparts
 
 device nand0 <sp_spinand.0>, # parts = 25

@@ -3,7 +3,7 @@
 # script for generating jffs2 root file-system (rootfs) for SPI-NOR
 #
 
-SPI_NOR_SIZE=16
+SPI_NOR_SIZE=$2
 
 LINUX=uImage
 ROOTFS_IMG=bin/rootfs.img

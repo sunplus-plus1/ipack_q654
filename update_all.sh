@@ -15,6 +15,11 @@ CHIP=$4
 ARCH=$5
 NOR_JFFS2=$6
 
+if [ -n "$7" ]; then
+	FLASH_SIZE=$7
+else
+	FLASH_SIZE=16	# default size = 16 MiB
+fi
 
 if [ "IMG_OUT" = "" ];then
 	echo "Error: no output file name"
@@ -57,9 +62,9 @@ ROOTFS=rootfs.img
 LINUX=uImage
 
 if [ "$CHIP" = "Q645" -o "$CHIP" = "SP7350" ]; then
-	kernel_max_size=$((0xde0000))
+	kernel_max_size=$(($FLASH_SIZE*0x100000-0x220000))
 else
-	kernel_max_size=$((0xe00000))
+	kernel_max_size=$(($FLASH_SIZE*0x100000-0x200000))
 fi
 
 if [ "$ZEBU_RUN" = "1" ];then
@@ -218,7 +223,7 @@ if [ "$ZEBU_RUN" = "0" ]; then
 
 			if [ "$NOR_JFFS2" == "1" ]; then
 				# Generate jffs2 rootfs for SPI-NOR
-				bash ./gen_nor_jffs2.sh $CHIP
+				bash ./gen_nor_jffs2.sh $CHIP $FLASH_SIZE
 				if [ $? -ne 0 ]; then
 					exit 1;
 				fi
@@ -239,7 +244,7 @@ if [ "$ZEBU_RUN" = "0" ]; then
 				# Check linux image size
 				kernel_sz=`du -sb bin/$LINUX | cut -f1`
 				if [[ $kernel_sz -gt $kernel_max_size ]]; then
-					echo -e "${YELLOW}Warning: $LINUX size ($kernel_sz) is too big. Need bigger SPI_NOR flash (>16MB)!${NC}"
+					echo -e "${YELLOW}Warning: $LINUX size ($kernel_sz) is too big. Need bigger SPI_NOR flash (> ${FLASH_SIZE}MiB)!${NC}"
 				fi
 			fi
 		fi

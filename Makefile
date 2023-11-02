@@ -10,18 +10,8 @@ EMMC_USER  := emmc_user0.hex
 ZEBU_RUN ?= 0
 BOOT_KERNEL_FROM_TFTP ?= 0
 TFTP_SERVER_PATH ?= 0
-CHIP ?= Q628
-ifeq ($(CHIP),Q654)
 CHIP=SP7350
-endif
-ARCH ?= arm
-ifeq ($(CHIP),Q645)
 ARCH=arm64
-endif
-ifeq ($(CHIP),SP7350)
-ARCH=arm64
-endif
-
 
 all: $(SPI_ALL)
 
@@ -32,11 +22,7 @@ $(SPI_ALL):
 	make config
 	DXTOR=0 fakeroot ./update_all.sh $(SPI_ALL) $(ZEBU_RUN) $(BOOT_KERNEL_FROM_TFTP) $(CHIP) $(ARCH) $(NOR_JFFS2) $(FLASH_SIZE)
 	@if [ "$(BOOT_KERNEL_FROM_TFTP)" = '1' ]; then \
-		if [ "$(CHIP)" = "I143" ]; then  \
-			./copy2tftp_riscv.sh $(TFTP_SERVER_PATH);\
-		else \
-			./copy2tftp.sh $(TFTP_SERVER_PATH);\
-		fi;\
+		./copy2tftp.sh $(TFTP_SERVER_PATH);\
 	fi
 
 ###############################
@@ -44,23 +30,14 @@ $(SPI_ALL):
 isp: all
 	@echo "Build $(ISP_IMG)"
 	@dd if=bin/xboot.img of=$(BIN)/$(ISP_IMG)
-	@if [ "$(CHIP)" = "Q645" -o "$(CHIP)" = "SP7350" ]; then \
-		dd if=bin/u-boot.img of=$(BIN)/$(ISP_IMG) conv=notrunc bs=1k seek=192 ; \
-	else \
-		dd if=bin/u-boot.img of=$(BIN)/$(ISP_IMG) conv=notrunc bs=1k seek=64 ; \
-	fi;
+	@dd if=bin/u-boot.img of=$(BIN)/$(ISP_IMG) conv=notrunc bs=1k seek=192
 
 ###############################
 # Pack for SPI-NOR boot testing
 nor_hex:
 	@if [ ! -f $(BIN)/$(SPI_ALL) ]; then echo "No input : $(BIN)/$(SPI_ALL)" ; exit 1 ; fi
-	@if [ "$(CHIP)" = "SP7350" ]; then \
-		echo "* Gen NOR Hex : Q654_run.hex" ; \
-		./tools/gen_hex.sh $(BIN)/$(SPI_ALL) $(BIN)/Q654_run.hex ; \
-	else \
-		echo "* Gen NOR Hex : $(CHIP)_run.hex" ; \
-		./tools/gen_hex.sh $(BIN)/$(SPI_ALL) $(BIN)/$(CHIP)_run.hex ; \
-	fi;
+	@echo "* Gen NOR Hex : Q654_run.hex" ;
+	@./tools/gen_hex.sh $(BIN)/$(SPI_ALL) $(BIN)/Q654_run.hex ;
 
 ###############################
 # Create SD card hex file for Zebu
@@ -150,9 +127,7 @@ emmc_hex:
 	@if [ "$(CHIP)" = "I143" ]; then \
 		dd if=../out/freertos.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x1822) >/dev/null 2>&1 ; \
 	fi;
-	@if [ "$(CHIP)" = "Q645" -o "$(CHIP)" = "SP7350" ]; then \
-		dd if=../out/fip.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x1022) >/dev/null 2>&1 ; \
-	fi;
+	@dd if=../out/fip.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x1022) >/dev/null 2>&1 ;
 	@dd if=../out/dtb of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x2022) >/dev/null 2>&1
 	@dd if=../out/uImage of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x2222) >/dev/null 2>&1
 	@dd if=../out/rootfs.img of=$(BIN)/emmc_user0.bin conv=notrunc bs=512 seek=$(shell printf %u 0x12222) >/dev/null 2>&1

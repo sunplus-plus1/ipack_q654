@@ -173,18 +173,14 @@ else
 	fi
 	rm -f $ZMEM_HEX
 	#        in               out           in_skip   DRAM_off
-	# Gen Q645_run.hex or Q654_run.hex for xboot.img
+	# Gen Q654_run.hex for xboot.img
 	if [ -f bin/$BOOTROM ]; then
 		dd if=bin/$BOOTROM     of=bin/$IMG_OUT
 	else
 		rm -f bin/$IMG_OUT
 	fi
 	dd if=bin/$XBOOT of=bin/$IMG_OUT conv=notrunc bs=1k seek=96
-	if [ "$CHIP" == "Q645" ]; then
-		./tools/gen_hex.sh bin/$IMG_OUT bin/Q645_run.hex
-	else
-		./tools/gen_hex.sh bin/$IMG_OUT bin/Q654_run.hex
-	fi
+	./tools/gen_hex.sh bin/$IMG_OUT bin/Q654_run.hex
 
 	# Gen zmem*.hex
 	rm -f ./bin/zmem*.hex

@@ -2,8 +2,9 @@
 
 #./update_me.sh <source_img>
 source ../.config
+source ../crossgcc/toolchain.config
 
-export PATH="../crossgcc/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu/bin/:$PATH"
+export PATH="$TOOLCHAIN_AARCH64_PATH/bin:$PATH"
 
 IMG_OUT=$1
 ZEBU_RUN=$2

@@ -126,7 +126,7 @@ if [ "$ZEBU_RUN" = "0" ]; then
 	dd if=bin/$XBOOT  of=bin/$IMG_OUT conv=notrunc bs=1k seek=96
 	dd if=bin/dtb.img of=bin/$IMG_OUT conv=notrunc bs=1k seek=288
 	dd if=bin/$UBOOT  of=bin/$IMG_OUT conv=notrunc bs=1k seek=416
-	dd if=bin/$FIP    of=bin/$IMG_OUT conv=notrunc bs=1k seek=1184
+	dd if=bin/$FIP    of=bin/$IMG_OUT conv=notrunc bs=1k seek=1284
 
 	if [ "$BOOT_KERNEL_FROM_TFTP" != "1" ]; then
 
